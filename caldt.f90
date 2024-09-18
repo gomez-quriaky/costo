@@ -1,0 +1,185 @@
+!=====================================================================
+!=====================================================================
+!     SUBROUTINE CALDT
+!=====================================================================
+!=====================================================================
+!> This subroutine computes :
+!!
+!!   - an array with the parameter indice of the hitten nodes by 3D 
+!!     raytracing (IBOVE)
+!!   - the frechet matrix (ADERI) according to the linear algebra of the
+!!     method
+!!   - The calculated delay times CALDATA (zero average) with the 
+!!     new parameters PAR
+! 
+! Called by MAIN
+! calls none
+!=====================================================================
+
+    SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+
+      USE MOD_unit
+      USE MOD_delim
+      USE MOD_layer
+      
+      IMPLICIT NONE
+
+!=====================================================================
+! Declaration of the in/out arguments of CALDT
+!=====================================================================
+      integer,intent(in)                         :: invnod
+      integer,DIMENSION(:),intent(inout)         :: ibove
+      integer,DIMENSION(:),pointer               :: ieq
+
+      real(kind=8),DIMENSION(:),intent(in)       :: par
+      real(kind=8),DIMENSION(:),intent(inout)    :: caldata
+      real(kind=8),DIMENSION(:,:),intent(inout)  :: aderi
+      real(kind=8),DIMENSION(:,:,:,:),intent(in) :: vels
+!=====================================================================
+! Declaration of the dummy arguments of CALDT
+!=====================================================================
+      integer                               :: i,ii,j,jj,ier,ib,jb,m,nray
+      integer                               :: no_event,nnod,num
+      integer                               :: k,x,y,maxi
+      integer,DIMENSION(:),ALLOCATABLE      :: count
+
+      real(kind=8)                          :: der_slow,vinit,vpert
+      real(kind=8),DIMENSION(:),ALLOCATABLE :: mean
+!=====================================================================
+! Initialization of ibove and caldata arrays to 0.
+!=====================================================================
+      ibove(:) = 0
+      caldata(jbegin(2):jend(2)) = 0.d0
+
+      write(*,*)''
+      write(*,*)'FORWARD CALCULATION OF SYNTHETIC DELAY TIMES'
+      write(inout,*)''
+      write(inout,*)'FORWARD CALCULATION OF SYNTHETIC DELAY TIMES'
+!=====================================================================
+! Opening the file inmat (synthe.fre)
+!=====================================================================
+      open(inmat,file='synth.fre',status='old',iostat=ier)
+      if(ier.ne.0) then
+         write(*,*)'Error in opening the file SYNTHE.FRE, logical unit ',&
+              inmat,'. Stooooop in CALDT!'
+         STOP
+      end if
+!=====================================================================
+! Check if reading parameters are non null
+!=====================================================================
+      if(ibegin(2).eq.0) then
+         write(*,*)''
+         write(*,*)'Inconsistency in CALDT (ibegin(2)=0). Stooooop!'
+         STOP
+      end if
+!=====================================================================
+! Check counter of data (jb) to starting value
+! Every measured delay time increases this counter by 1
+!=====================================================================
+      if(jbegin(2).ne.0) then
+         jb = jbegin(2)-1
+      else
+         jb = 0
+      end if
+!=====================================================================
+! Starting reading the informations in the synthe.fre file (INMAT)
+! INMAT is organized in blocks, with header line of:
+!       - the number of node in the velocity model (m)
+!       - the number of rays passing through this node (nray)
+!       - the new number of nodes to be inverted (nnod)
+! Then for each block:
+!       - the number of the event(no_event)
+!       - the partial derivative(der_slo)
+!=====================================================================
+      do i=1,invnod
+         read(inmat,*,end=100) m,nray,nnod
+!=====================================================================
+! Correspondance between node number and parameter number is stored 
+! in ibove
+! ibove(no_of_the_node) = no_of_the_parameter in PAR array if node is hit
+!                       = 0                                if node is not hit
+!=====================================================================
+         ib = ibegin(2)+m-1
+         ibove(m) = ib
+!=====================================================================
+! Find the initial value of the velocity for this node and store it
+!=====================================================================
+         num = 0
+ exter:  do k=1,nznode-1
+            do y=1,nynode
+               do x=1,nxnode
+                  num = num+1
+                  if(num.eq.m) then
+                     vinit = vels(x,y,k,1)
+                     exit exter
+                  end if
+               end do
+            end do
+         end do exter
+!=====================================================================
+! For each ray passing through the node, calculate the new perturbed
+! velocity (vpert) and the corresponding delay time (caldata)
+! In terms of dimension (L=length, T=time):
+! der_slo = [L]
+! par = vpert = vinit = [L/T]
+! aderi = [T**2/L]
+! caldata = [T]
+!=====================================================================
+         do j=1,nray
+            read(inmat,*) no_event,der_slow
+            jj=jb+no_event
+            vpert = vinit + par(ib)
+            aderi(jj,ib) = -der_slow/(vpert*vpert)
+            caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib)
+         end do
+      end do
+!=====================================================================
+! Closing the file inmat (synthe.fre)
+!=====================================================================
+ 100  close(inmat,iostat=ier)
+      if(ier.ne.0) then
+         write(*,*)'Error in closing the file SYNTHE.FRE, logical unit ',&
+              inmat,'. Stooooop in CALDT!'
+         STOP
+      end if
+
+!=====================================================================
+! The average delay times for every event is zero, thus the
+! synthetic delay times should be normalized the same way.
+! The mean for each event is subtracted to delay times
+! ieq(ii) is the event number whose ray ii belongs to (ii=1,n_data)
+!=====================================================================
+      maxi = MAXVAL(ieq)
+      ALLOCATE(mean(maxi))
+      ALLOCATE(count(maxi))
+
+      mean(:) = 0.d0
+      count(:) = 0
+      do i=jbegin(2),jend(2)
+         ii=i-jbegin(2)+1
+         j=ieq(ii)
+         mean(j) = mean(j) + caldata(i)
+         count(j) = count(j) + 1
+      end do
+
+      do i=1,maxi
+         if(count(i).ne.0) then
+            mean(i) = mean(i)/count(i)
+         else
+            write(*,*)''
+            write(*,*)'WARNING: Event No ',i,' has no rays. Check &
+                 &data file.'
+         end if
+      end do
+
+      do i=jbegin(2),jend(2)
+         ii=i-jbegin(2)+1
+         j=ieq(ii)
+         caldata(i) = caldata(i) - mean(j)
+      end do
+
+
+      DEALLOCATE(mean)
+      DEALLOCATE(count)
+
+    END SUBROUTINE CALDT

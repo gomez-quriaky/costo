@@ -1,0 +1,52 @@
+TITLE
+IBM_syn_gradio
+
+INV   INVD   INVV   INVGR
+ T      F      F      T
+
+ITER EPSI
+ 5   0.0003
+
+CORREL THRESHOLD
+1.000
+
+ISMOOTH SMOOTHD SMOOTHV
+   1     0.1   0.01
+
+REGUL LAMBDA
+  0     1.0
+
+NOISED NOISEV NOISEGR  SIGMAD  SIGMAV  SIGMAGR
+  0      0      0        0.041   0.091    0.041
+
+ZROREF ROEXP
+  10     0
+
+LAYERS
+  6
+
+NLR BINIT   VARB   DDVR DRMAX
+ 1   3.0    0.10   0.10  4.0
+ 2   3.0    0.10   0.10  4.0
+ 3   3.0    0.10   0.10  4.0
+ 4   3.0    0.10   0.10  4.0
+ 5   3.0    0.10   0.10  4.0
+ 6   3.0    0.10   0.10  4.0
+
+NAME OF THE DENSITY MODEL FILE
+grid_ibm
+
+NAME OF THE VELOCITY MODEL FILE
+velocity.mod
+
+NUMBER OF DATA FILE (gravi first)
+ 1
+
+1st CODATA (1=irr.gravi,2=reg.gravi,3=delaytime,4=FTG)
+4
+
+1st DFILE
+FTG_syn_ibm
+
+1st MODVAR RTVAR
+      0     15.0 15.0 15.0 15.0 15.0 15.0 
