@@ -16,7 +16,8 @@
 ! calls none
 !=====================================================================
 
-    SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+    SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
+                     val_ad_s,columnAD,rowAD)
 
       USE MOD_unit
       USE MOD_delim
@@ -35,6 +36,11 @@
       real(kind=8),DIMENSION(:),intent(inout)    :: caldata
       real(kind=8),DIMENSION(:,:),intent(inout)  :: aderi
       real(kind=8),DIMENSION(:,:,:,:),intent(in) :: vels
+
+      real(kind=8),DIMENSION(:),intent(inout) 		:: val_ad_s
+	   integer, DIMENSION(:),intent(inout)   :: columnAD
+	   integer, DIMENSION(:), intent(inout)  :: rowAD
+
 !=====================================================================
 ! Declaration of the dummy arguments of CALDT
 !=====================================================================
@@ -101,7 +107,7 @@
 !=====================================================================
          ib = ibegin(2)+m-1
          ibove(m) = ib
-!=====================================================================
+!=====================================================================aderi
 ! Find the initial value of the velocity for this node and store it
 !=====================================================================
          num = 0
@@ -130,6 +136,8 @@
             jj=jb+no_event
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
+!           val_ad_s(jj) =  -der_slow/(vpert*vpert)
+            !rowAD(?) = 
             caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib)
          end do
       end do

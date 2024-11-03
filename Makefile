@@ -33,9 +33,9 @@ F77=gfortran
 #OPTION = -fdefault-real-8 -O0 -g  -fbounds-check -Wall -Wtabs -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace -ftrapv -fimplicit-none 
 MKLROOT = /opt/intel/oneapi/mkl/2024.2
 FFLAGS = -I$(HOME)/include/mkl/intel64/lp64 -fdefault-integer-8  -I$(MKLROOT)/include
-LIBS = -L$(HOME)/lib/intel64/libmkl_blas_ilp64.a
-LDFLAGS =   -m64 -Wl,--start-group ${MKLROOT}/lib/libmkl_gf_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
-
+#LIBS = -L$(HOME)/lib/intel64/libmkl_blas_ilp64.a
+#LDFLAGS =   -m64 -Wl,--start-group ${MKLROOT}/lib/libmkl_gf_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
+LDFLAGS =  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
 #F77=ifort
 # option de compil anne
 # =  -O3 -xhost -ipo -fp-model precise -heap-arrays

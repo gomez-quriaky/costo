@@ -599,7 +599,8 @@
       
    !  Aderi sparse variables
       
-      real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_aderi_s, column_aderi, row_aderi
+      real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_ad_s
+      integer, DIMENSION(:), ALLOCATABLE  :: columnAD, rowAD
       integer                                  ::  A_delta_dim, A_v_dim, A_GR_dim   
 
 !=====================================================================
@@ -1134,7 +1135,10 @@
       A_delta_dim = iend(1)*jend(1) 
       A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2))
       A_GR_dim = (iend(3)-ibegin(3))*(jend(3)-jbegin(3))
-      ALLOCATE (val_aderi_s(A_delta_dim + A_v_dim + A_GR_dim))
+
+      ALLOCATE (val_ad_s(A_delta_dim + A_v_dim + A_GR_dim))
+      ALLOCATE (columnAD(A_delta_dim + A_v_dim + A_GR_dim))
+      ALLOCATE (rowAD(A_delta_dim + A_v_dim + A_GR_dim))
 
       ALLOCATE (aderi(ndat,npar))
       ALLOCATE (bderi(npar,npar))
@@ -1183,7 +1187,8 @@
 ! Construct the file with hit nodes number IBOVE (CALDT)
 ! and find the density blocks constrained (stored in file bloc.nod, FINDNOD)
 !=====================================================================
-         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+         !CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
          if(INVD.or.INVGR) then
             CALL FINDNOD(xb,yb,zb,vxnodes,vynodes,vznodes,nbod,ibove)
 
@@ -1370,12 +1375,12 @@
 
          if(INVD) then
             CALL CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                        noised,signoisd)
+                        noised,signoisd,val_ad_s,columnAD,rowAD)
          end if
 
          if(INVGR) then
             CALL CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                             noisegr,signoisgr,rtvar,ncomp)
+                             noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD)
          end if
 
 !=====================================================================
@@ -1394,7 +1399,7 @@
 !           CALL RAYDENS()
 !        end if
 !=====================================================================
-            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
          end if
 !=====================================================================
 ! From here now, it only concerns inverse problem of data as the
@@ -1644,7 +1649,9 @@
 ! Deallocation of the allocatable arrays
 !=====================================================================
       !Aderi sparse
-      DEALLOCATE (val_aderi_s)
+      DEALLOCATE (val_ad_s)
+      DEALLOCATE(columnAD)
+      DEALLOCATE(rowAD)
 
       DEALLOCATE (ddtot)
       DEALLOCATE (vdtot)
