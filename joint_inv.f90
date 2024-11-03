@@ -534,6 +534,7 @@
 !=====================================================================
       IMPLICIT NONE
 
+      INCLUDE 'mkl.fi'
       logical                                 :: temp1
 	
       character(len=1)                           :: answer
@@ -589,12 +590,17 @@
       real(kind=8),DIMENSION(:),pointer       :: rayparm,bazin,weight
       real(kind=8),DIMENSION(:,:),pointer     :: stc,ttt
 
-      integer                           :: ii,ipar,k,l  
-      real(kind=8)                      :: x,y,z  
-      character*3 						:: scount     
-      character*20 						:: file_name  
-      real(kind=8)                      :: dvel     
-      integer                 :: ncomp             
+      integer                                 :: ii,ipar,k,l  
+      real(kind=8)                            :: x,y,z  
+      character*3 						          :: scount     
+      character*20 						          :: file_name  
+      real(kind=8)                            :: dvel     
+      integer                                 :: ncomp     
+      
+   !  Aderi sparse variables
+      
+      real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_aderi_s, column_aderi, row_aderi
+      integer                                  ::  A_delta_dim, A_v_dim, A_GR_dim   
 
 !=====================================================================
 ! Calculation of the date and time of the beginning of the run
@@ -910,7 +916,7 @@
       write(inout,*)''
       write(inout,'(4x,''Number of parameters to be inverted &
            &per block:'',1x,i5/)') npar1
-     
+           
       select case (ismooth)
              case (0)
                 write(inout,'(4x,''No smoothest model'')')
@@ -1061,7 +1067,8 @@
       end if
 
 
-      if((INV.and.INVV.and.INVD).or.(INV.and.INVV.and.INVGR)) then
+      !if((INV.and.INVV.and.INVD).or.(INV.and.INVV.and.INVGR)) then
+      if(INV.and.INVV.and.(INVD .or. INVGR)) then
          CALL READBCO(binit,varb,par,varpar,npar)
       else
          write(inout,*)''
@@ -1123,6 +1130,12 @@
 !=====================================================================
 ! Allocate memory for the ADERI array(nbdata,nbparam) and initialization
 !=====================================================================
+      !Aderi blocks dim
+      A_delta_dim = iend(1)*jend(1) 
+      A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2))
+      A_GR_dim = (iend(3)-ibegin(3))*(jend(3)-jbegin(3))
+      ALLOCATE (val_aderi_s(A_delta_dim + A_v_dim + A_GR_dim))
+
       ALLOCATE (aderi(ndat,npar))
       ALLOCATE (bderi(npar,npar))
       ALLOCATE (h1(npar))
@@ -1630,6 +1643,9 @@
 !=====================================================================
 ! Deallocation of the allocatable arrays
 !=====================================================================
+      !Aderi sparse
+      DEALLOCATE (val_aderi_s)
+
       DEALLOCATE (ddtot)
       DEALLOCATE (vdtot)
       DEALLOCATE (grdtot)
