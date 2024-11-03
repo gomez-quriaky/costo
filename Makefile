@@ -31,6 +31,10 @@
 F77=gfortran
 #OPTION = -ffree-form
 #OPTION = -fdefault-real-8 -O0 -g  -fbounds-check -Wall -Wtabs -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace -ftrapv -fimplicit-none 
+MKLROOT = /opt/intel/oneapi/mkl/2024.2
+FFLAGS = -I$(HOME)/include/mkl/intel64/lp64 -fdefault-integer-8  -I$(MKLROOT)/include
+LIBS = -L$(HOME)/lib/intel64/libmkl_blas_ilp64.a
+LDFLAGS =   -m64 -Wl,--start-group ${MKLROOT}/lib/libmkl_gf_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
 
 #F77=ifort
 # option de compil anne
@@ -92,7 +96,7 @@ costo ::
 	gcc -c lib_C/grav_prism.c -Ilib_C
 	gcc -c tesseroid.c -Ilib_C
 
-	$(F77) $(OPTION) -o costo $(USER_OBJ_MAIN) $(USER_OBJ_ALL) tesseroid.o constants.o geometry.o grav_prism.o
+	$(F77) $(FFLAGS) $(LIBS) -o costo $(USER_OBJ_MAIN) $(USER_OBJ_ALL)  $(LDFLAGS) tesseroid.o constants.o geometry.o grav_prism.o 
 
 doc ::
 	doxygen Doxyfile_costo

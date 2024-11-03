@@ -477,7 +477,8 @@
       INCLUDE 'INTERF/MOD_bcalc.f'
       INCLUDE 'INTERF/MOD_dsmooth.f'
       INCLUDE 'INTERF/MOD_vsmooth.f'
-      INCLUDE 'INTERF/MOD_bldmat.f'
+      INCLUDE 'INTERF/MOD_bldmat.f90'
+      !INCLUDE 'INTERF/MOD_bldmat_modf.f90'
       INCLUDE 'INTERF/MOD_invermat.f'
       INCLUDE 'INTERF/MOD_resol.f'
       INCLUDE 'INTERF/MOD_perturb.f'
@@ -486,7 +487,7 @@
 !=====================================================================
 !  BEGINNING OF MAIN PROGRAM
 !=====================================================================
-    PROGRAM joint_inv
+   PROGRAM joint_inv
 
 !=====================================================================
 !  DECLARATION OF COMMUN MODULES and EXPLICIT INTERFACES
@@ -521,6 +522,7 @@
       USE MOD_dsmooth
       USE MOD_vsmooth
       USE MOD_bldmat
+      !USE MOD_bldmat_modf
       USE MOD_invermat
       USE MOD_resol
       USE MOD_perturb
@@ -604,7 +606,7 @@
       write(*,*) ' '
       write(*,*) ' '
       write(*,*) '    **************************************************************'
-      write(*,*) '    ********** JOINT INVERSION OF TOOM / GRAVI / GRADIO **********'
+      write(*,*) '    ********** JOINT INVERSION OF TOMO / GRAVI / GRADIO **********'
       write(*,*) '    **************************************************************'
       write(*,*) ' '
       write(*,*) ' '
@@ -924,15 +926,15 @@
 
       select case (regul)
 	     case (0)
-         write(inout,'(4x,''No regularization of the matrix'')')
+            write(inout,'(4x,''No regularization of the matrix'')')
 	     case (1)
-                write(inout,'(4X,''Regularization of the matrix'')')
-         write(inout,'(7x,''-regularization factor:'',1p,E10.2)')&
+            write(inout,'(4X,''Regularization of the matrix'')')
+            write(inout,'(7x,''-regularization factor:'',1p,E10.2)')&
                lambda
 	     case default
-                write(*,*)''
-                write(*,*)'Regul value must be 0 or 1'
-                STOP 'in MAIN! Error in PARAMETER.INP file.'
+            write(*,*)''
+            write(*,*)'Regul value must be 0 or 1'
+            STOP 'in MAIN! Error in PARAMETER.INP file.'
       end select
 
       write(inout,'(4x,''Description of the'',i4,'' layers'')') nlayer
@@ -1102,7 +1104,7 @@
 
 !=====================================================================
 ! END OF INPUTS MODEL AND DATA
-! Checking the good storage of the data
+! Checking the correct storage of the data
 !=====================================================================
       write(inout,*)' '
       write(inout,*)'CHECKING THE GOOD STORAGE OF DATA AND PARAMETERS'
@@ -1439,44 +1441,44 @@
 
          dtot = ddtot(iiter,4) + vdtot(iiter,4) + bdtot(iiter,3) + grdtot(iiter)
 
-! enregistrement modèle densité
-if(INVD.or.INVGR) then
-    WRITE(scount,'(i3)') iiter
-    file_name  = scount//"_iter_density.res"
-    open(unit = 444,file = file_name,status ='replace') 
-             ii = 0
-	         do i=ibegin(1),iend(1)
-                ii = ii + 1
-                x=(xb(ii,1)+xb(ii,2))*0.5
-                y=(yb(ii,1)+yb(ii,2))*0.5
-                z=(zb(ii,1)+zb(ii,2))*0.5
-                write(444,'(4(f10.3,2x))') x,y,z,par(i)
-	         end do
-    close(444)
-endif
+         ! enregistrement modèle densité
+         if(INVD.or.INVGR) then
+            WRITE(scount,'(i3)') iiter
+            file_name  = scount//"_iter_density.res"
+            open(unit = 444,file = file_name,status ='replace') 
+                     ii = 0
+                     do i=ibegin(1),iend(1)
+                        ii = ii + 1
+                        x=(xb(ii,1)+xb(ii,2))*0.5
+                        y=(yb(ii,1)+yb(ii,2))*0.5
+                        z=(zb(ii,1)+zb(ii,2))*0.5
+                        write(444,'(4(f10.3,2x))') x,y,z,par(i)
+                     end do
+            close(444)
+         endif
 
-! enregistrement modèle vitesse
-if(INVV) then
-    WRITE(scount,'(i3)') iiter
-    file_name  = scount//"_iter_velocity.res"
-    open(unit = 444,file = file_name,status ='replace') 
-             ipar = 0
-	         do k=1,nznode-1
-	            do j=1,nynode
-	               do i=1,nxnode
-                      ipar = ipar + 1
-	                  if(ibove(ipar).ne.0) then
-                         dvel=par(ibove(ipar))/vels(i,j,k,1)*100
-	                  else
-                         dvel=0.d0
-	                  end if
-                      write(velout,'(4(f10.4,2x),10f10.3)') vxnodes(i),vynodes(j),&
-                           vznodes(k),dvel,(vels(i,j,k,l),l=1,iter+1)
-	               end do
-	            end do
-	         end do
-    close(444)
-endif
+         ! enregistrement modèle vitesse
+         if(INVV) then
+            WRITE(scount,'(i3)') iiter
+            file_name  = scount//"_iter_velocity.res"
+            open(unit = 444,file = file_name,status ='replace') 
+                     ipar = 0
+                     do k=1,nznode-1
+                        do j=1,nynode
+                           do i=1,nxnode
+                              ipar = ipar + 1
+                              if(ibove(ipar).ne.0) then
+                                 dvel=par(ibove(ipar))/vels(i,j,k,1)*100
+                              else
+                                 dvel=0.d0
+                              end if
+                              write(velout,'(4(f10.4,2x),10f10.3)') vxnodes(i),vynodes(j),&
+                                    vznodes(k),dvel,(vels(i,j,k,l),l=1,iter+1)
+                           end do
+                        end do
+                     end do
+            close(444)
+         endif
 
 ! enregistrement de la réponse du modèle
 

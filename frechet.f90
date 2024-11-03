@@ -125,7 +125,7 @@
       rline=0
       do nr=1,n_data
 
-   write(inout,*)'    tracing the ',nr,'-th ray ; Call FORW',rayparm(nr),bazin(nr)            
+         write(inout,*)'    tracing the ',nr,'-th ray ; Call FORW',rayparm(nr),bazin(nr)            
          CALL FORW(velco,nr,nrp,bazin,rayparm,ieq,stc,ist,G,&
               vxnodes,vynodes,vznodes,fstime)
          tt_pred(nr)=fstime

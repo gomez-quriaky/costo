@@ -12,12 +12,12 @@
 ! Called by main
 ! Calls DATA_REG,DATA_IRR,VREAD
 !=====================================================================
-    INCLUDE 'INTERF/MOD_datareg.f'
-    INCLUDE 'INTERF/MOD_datairr.f'
-    INCLUDE 'INTERF/MOD_vread.f'
-    INCLUDE 'INTERF/MOD_grread.f' ! MP18
+   INCLUDE 'INTERF/MOD_datareg.f'
+   INCLUDE 'INTERF/MOD_datairr.f'
+   INCLUDE 'INTERF/MOD_vread.f'
+   INCLUDE 'INTERF/MOD_grread.f' ! MP18
 
-    SUBROUTINE RDATA(nfil,codata,dfile,modvar,rtvar,&
+   SUBROUTINE RDATA(nfil,codata,dfile,modvar,rtvar,&
                      FX,FY,FZ,DVAL,AMASK,usedata,npts,rayparm,bazin,&
                      weight,ndat,ist,stc,ieq,ttt,punvar,varv,varg,vargr,ncomp)
 
@@ -112,170 +112,170 @@
 !=====================================================================
 ! codata = 1 : Irregular gravity data file
 !=====================================================================
-         case (1)
-            write(*,*)''
-            write(*,*)'IRREGULAR GRAVITY DATA INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,*)' '
-            write(inout,*)'IRREGULAR GRAVITY DATA INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
-            write(inout,'(5x,''Standard Deviation: '',f10.3)') rtvar(ifil)
-               
-            open(inddat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
-            fdata=dfile(ifil)
-            if(ier.ne.0) then
-               write(*,*)'Error in opening file ',dfile(ifil)
-               write(*,*)'Stooooop in RDATA'
-               STOP
-            end if
-            CALL DATA_IRR(fdata,ifil,modvar,rtvar,&
-                 npts,ptvar1,gdata,gFX,gFY,gFZ,DVAL,AMASK)
+            case (1)
+               write(*,*)''
+               write(*,*)'IRREGULAR GRAVITY DATA INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,*)' '
+               write(inout,*)'IRREGULAR GRAVITY DATA INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
+               write(inout,'(5x,''Standard Deviation: '',f10.3)') rtvar(ifil)
+                  
+               open(inddat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
+               fdata=dfile(ifil)
+               if(ier.ne.0) then
+                  write(*,*)'Error in opening file ',dfile(ifil)
+                  write(*,*)'Stooooop in RDATA'
+                  STOP
+               end if
+               CALL DATA_IRR(fdata,ifil,modvar,rtvar,&
+                  npts,ptvar1,gdata,gFX,gFY,gFZ,DVAL,AMASK)
 
-            jbegin(1) = 1
-            jend(1) = npts(ifil)
+               jbegin(1) = 1
+               jend(1) = npts(ifil)
 
-            write(inout,*)'    Number of data read: ',npts(ifil)
-            write(inout,*)'    Storage of gravity data from i=',&
-                 jbegin(1),' to i=',jend(1)
+               write(inout,*)'    Number of data read: ',npts(ifil)
+               write(inout,*)'    Storage of gravity data from i=',&
+                  jbegin(1),' to i=',jend(1)
 
-            close(inddat,IOSTAT=ier)
-            if(ier.ne.0) then
-               write(*,*)'Error in closing file ',dfile(ifil)
-               write(*,*)'Stooooop in RDATA'
-               STOP
-            end if
+               close(inddat,IOSTAT=ier)
+               if(ier.ne.0) then
+                  write(*,*)'Error in closing file ',dfile(ifil)
+                  write(*,*)'Stooooop in RDATA'
+                  STOP
+               end if
 !=====================================================================
 ! codata = 2 : Regular gravity data file
 !=====================================================================
-         case (2)
-            write(*,*)''
-            write(*,*)'REGULAR GRAVITY DATA INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,*)' '
-            write(inout,*)'REGULAR GRAVITY DATA INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
-            write(inout,'(5x,''Standard Deviation: '',f10.3)') rtvar(ifil)
-            
-            open(inddat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
-            fdata=dfile(ifil)
-            if(ier.ne.0) then
-               write(*,*)'Error in opening file ',dfile(ifil)
-               STOP
-            end if
+            case (2)
+               write(*,*)''
+               write(*,*)'REGULAR GRAVITY DATA INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,*)' '
+               write(inout,*)'REGULAR GRAVITY DATA INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
+               write(inout,'(5x,''Standard Deviation: '',f10.3)') rtvar(ifil)
+               
+               open(inddat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
+               fdata=dfile(ifil)
+               if(ier.ne.0) then
+                  write(*,*)'Error in opening file ',dfile(ifil)
+                  STOP
+               end if
 
-            call DATA_REG(fdata,ifil,modvar,rtvar,&
-                 npts,ptvar1,gdata,gFX,gFY,gFZ,DVAL,AMASK)
-                
-            jbegin(1) = 1
-            jend(1) = npts(ifil)
+               call DATA_REG(fdata,ifil,modvar,rtvar,&
+                  npts,ptvar1,gdata,gFX,gFY,gFZ,DVAL,AMASK)
+                  
+               jbegin(1) = 1
+               jend(1) = npts(ifil)
 
-            write(inout,*)'    Number of data read: ',npts(ifil)
-            write(inout,*)'    Storage of gravity data from i=',&
-                 jbegin(1),' to i=',jend(1)
+               write(inout,*)'    Number of data read: ',npts(ifil)
+               write(inout,*)'    Storage of gravity data from i=',&
+                  jbegin(1),' to i=',jend(1)
 
-            close(inddat,IOSTAT=ier)
-            if(ier.ne.0) then
-               write(*,*)'Error in closing file ',dfile(ifil)
-               write(*,*)'Stooooop in RDATA'
-               STOP
-            end if
+               close(inddat,IOSTAT=ier)
+               if(ier.ne.0) then
+                  write(*,*)'Error in closing file ',dfile(ifil)
+                  write(*,*)'Stooooop in RDATA'
+                  STOP
+               end if
 
 !=====================================================================
 ! codata = 3 : Irregular delay times data file
 !=====================================================================
-         case (3)
-            write(*,*)''
-            write(*,*)'IRREGULAR DELAY TIMES INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,*)' '
-            write(inout,*)'IRREGULAR DELAY TIMES INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
-            write(inout,'(5x,''Standard Deviation: '',f10.3)') rtvar(ifil)
-            
-            open(invdat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
-            fdata=dfile(ifil)
-            if(ier.ne.0) then
-               write(*,*)'Error in opening file ',dfile(ifil)
-               STOP
-            end if
+            case (3)
+               write(*,*)''
+               write(*,*)'IRREGULAR DELAY TIMES INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,*)' '
+               write(inout,*)'IRREGULAR DELAY TIMES INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
+               write(inout,'(5x,''Standard Deviation: '',f10.3)') rtvar(ifil)
+               
+               open(invdat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
+               fdata=dfile(ifil)
+               if(ier.ne.0) then
+                  write(*,*)'Error in opening file ',dfile(ifil)
+                  STOP
+               end if
 
-            CALL VREAD(fdata,ifil,rayparm,bazin,weight,ttt,npts,&
-                 ist,ieq,stc,ptvar2,modvar,rtvar)
-            jbegin(2) = jend(1)+1
-            jend(2) = jbegin(2) + npts(ifil) -1
-            
-            write(inout,*)''
-            write(inout,*)'    Number of rays read: ',npts(ifil)
-            write(inout,*)'    Storage of velocity data from i=',&
-                 jbegin(2),' to i=',jend(2)
-                
-            close(invdat,IOSTAT=ier)
-            if(ier.ne.0) then
-               write(*,*)'Error in closing file ',dfile(ifil)
-               write(*,*)'Stooooop in RDATA!'
-               STOP
-            end if
+               CALL VREAD(fdata,ifil,rayparm,bazin,weight,ttt,npts,&
+                  ist,ieq,stc,ptvar2,modvar,rtvar)
+               jbegin(2) = jend(1)+1
+               jend(2) = jbegin(2) + npts(ifil) -1
+               
+               write(inout,*)''
+               write(inout,*)'    Number of rays read: ',npts(ifil)
+               write(inout,*)'    Storage of velocity data from i=',&
+                  jbegin(2),' to i=',jend(2)
+                  
+               close(invdat,IOSTAT=ier)
+               if(ier.ne.0) then
+                  write(*,*)'Error in closing file ',dfile(ifil)
+                  write(*,*)'Stooooop in RDATA!'
+                  STOP
+               end if
 
 !=====================================================================
 ! codata = 4 : Gravity Gradients data
 !=====================================================================
-         case (4)
-            write(*,*)''
-            write(*,*)'GRAVITY GRADIENTS DATA INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,*)' '
-            write(inout,*)'GRAVITY GRADIENTS DATA INVERTED, &
-                 &DATA FILE: ',dfile(ifil)
-            write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
-            write(inout,'(5x,''Standard Deviation: '',f10.3 f10.3 f10.3 f10.3 f10.3 f10.3)') &
-               rtvar(ifil),rtvar(ifil+1),&
-               rtvar(ifil+2),rtvar(ifil+3),rtvar(ifil+4),rtvar(ifil+5)
+            case (4)
+               write(*,*)''
+               write(*,*)'GRAVITY GRADIENTS DATA INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,*)' '
+               write(inout,*)'GRAVITY GRADIENTS DATA INVERTED, &
+                  &DATA FILE: ',dfile(ifil)
+               write(inout,'(5x,''Mode of Variance: '',i1)') modvar(ifil)
+               write(inout,'(5x,''Standard Deviation: '',f10.3 f10.3 f10.3 f10.3 f10.3 f10.3)') &
+                  rtvar(ifil),rtvar(ifil+1),&
+                  rtvar(ifil+2),rtvar(ifil+3),rtvar(ifil+4),rtvar(ifil+5)
 
-            open(invdat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
-            fdata=dfile(ifil)
-            if(ier.ne.0) then
-               write(*,*)'Error in opening file ',dfile(ifil)
-               STOP
-            end if         
+               open(invdat,FILE=dfile(ifil),STATUS='OLD',IOSTAT=ier)
+               fdata=dfile(ifil)
+               if(ier.ne.0) then
+                  write(*,*)'Error in opening file ',dfile(ifil)
+                  STOP
+               end if         
 
-            CALL GRREAD(fdata,ifil,modvar,rtvar,npts,grFX,grFY,grFZ,&
-                        XX,XY,XZ,YY,YZ,ZZ,ptvar3,ncomp)
-            
-            jbegin(3) = jend(2)+1
-            jend(3) = jbegin(3) + npts(ifil)*ncomp -1      ! MP36
+               CALL GRREAD(fdata,ifil,modvar,rtvar,npts,grFX,grFY,grFZ,&
+                           XX,XY,XZ,YY,YZ,ZZ,ptvar3,ncomp)
+               
+               jbegin(3) = jend(2)+1
+               jend(3) = jbegin(3) + npts(ifil)*ncomp -1      ! MP36
 
-            nptsgr=npts(ifil)
+               nptsgr=npts(ifil)
 
-            write(inout,*)'    Number of data read: ',npts(ifil)
-            write(inout,*)'    Storage of FTG data from i=',&
-                 jbegin(3),' to i=',jend(3)
+               write(inout,*)'    Number of data read: ',npts(ifil)
+               write(inout,*)'    Storage of FTG data from i=',&
+                  jbegin(3),' to i=',jend(3)
 
-            close(inddat,IOSTAT=ier)
-            if(ier.ne.0) then
-               write(*,*)'Error in closing file ',dfile(ifil)
-               write(*,*)'Stooooop in RDATA'
-               STOP
-            end if
+               close(inddat,IOSTAT=ier)
+               if(ier.ne.0) then
+                  write(*,*)'Error in closing file ',dfile(ifil)
+                  write(*,*)'Stooooop in RDATA'
+                  STOP
+               end if
 
-          nbn=0
-          if (INVD) then
-            nbn=nbn+1
-          endif
-          if (INVV) then
-            nbn=nbn+1
-          endif
+            nbn=0
+            if (INVD) then
+               nbn=nbn+1
+            endif
+            if (INVV) then
+               nbn=nbn+1
+            endif
 
 !=====================================================================
 ! Else : Do not know
 !=====================================================================
-         case default
-            write(*,*)''
-            write(*,*)'Invalid data code: Should be between 1 and &
-                 &4, I don''t know how to do better for the moment.'
-            STOP 'in RDATA'
+            case default
+               write(*,*)''
+               write(*,*)'Invalid data code: Should be between 1 and &
+                  &4, I don''t know how to do better for the moment.'
+               STOP 'in RDATA'
          end select
 
       end do
@@ -934,9 +934,9 @@
 ! Called from RDATA subroutine
 !> Calls STATCOORD (only if input coordinates are in lat-lon)
 !=====================================================================
-    INCLUDE 'INTERF/MOD_statcoord.f'
+   INCLUDE 'INTERF/MOD_statcoord.f'
 
-    SUBROUTINE VREAD(fdata,ifil,rayparm,bazin,weight,ttt,npts,ist,&
+   SUBROUTINE VREAD(fdata,ifil,rayparm,bazin,weight,ttt,npts,ist,&
                      ieq,stc,ptvar2,modvar,rtvar)
 
       USE MOD_unit
