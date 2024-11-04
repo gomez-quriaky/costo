@@ -31,7 +31,7 @@
       INCLUDE 'INTERF/MOD_denvel.f'
       INCLUDE 'INTERF/MOD_dgemm.f'
       INCLUDE 'INTERF/MOD_dgemv.f'
-      
+
       SUBROUTINE BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                         npar1,ndat,smooth,iside,jside,ivside,jvside,&
                         xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
@@ -46,9 +46,6 @@
       USE MOD_denvel
       USE MOD_dgemm
       USE MOD_dgemv
-
-      USE BLAS95
-      USE F95_precision
 
       IMPLICIT NONE
 
@@ -72,15 +69,12 @@
 ! Declaration of the dummy arguments of BLDMAT
 !=====================================================================
       integer                                    :: i,ii,j,k,l,dcont,vcont
-      integer,DIMENSION(8)                       :: time_miter1,time_miter2, time_multi
-      integer,DIMENSION(8)                       :: t_h11,t_h12 
 
       real(kind=8)                               :: dsum,vsum
       real(kind=8)                               :: tracetot,vectrtot
       real(kind=8),DIMENSION(4)                  :: traces,vectrs
       real(kind=8),DIMENSION(3)                  :: itrace
-      real(kind=8),DIMENSION(3,4)                :: vectra,trace
-      real(kind=8),DIMENSION(npar,ndat)          :: matinter !to compute aderi*punvar
+      real(kind=8),DIMENSION(3,4)               :: vectra,trace
       real(kind=8),PARAMETER                     :: one = 1.0d0
       real(kind=8),PARAMETER                     :: zero = 0.0d0
 !=====================================================================
@@ -123,39 +117,24 @@
 ! Calculation of At*A (of dimension nparXnpar)
 ! and store the result in the array BDERI 
 !=====================================================================
-     ! write(inout,*)'    Computing the partial derivative second part'
-     ! write(*,*)'    Computing the partial derivative second part'
+      write(inout,*)'    Computing the partial derivative second part'
+      write(*,*)'    Computing the partial derivative second part'
 !=====================================================================
 ! Time consumming with BLAS subroutine is much better than with MATMUL!!
 !=====================================================================
-     ! do i=1,npar
-      !   do j=1,i
-        !    do l=1,ndat
-         !      bderi(i,j)=bderi(i,j)+aderi(l,i)*aderi(l,j)*punvar(l)
-          !  end do
-           ! if(j.ne.i) bderi(j,i)=bderi(i,j)
-        ! end do
-      ! end do
-      CALL DATE_AND_TIME(VALUES=time_miter1)
-      write(inout,*)'    Computing the partial derivative first part'
-      write(*,*)'    Computing the partial derivative first part'
-      do j=1,ndat
-         do i=1,npar
-            matinter(i,j)=aderi(j,i)*punvar(j)
+      do i=1,npar
+         do j=1,i
+            do l=1,ndat
+               bderi(i,j)=bderi(i,j)+aderi(l,i)*aderi(l,j)*punvar(l)
+            end do
+            if(j.ne.i) bderi(j,i)=bderi(i,j)
          end do
+        
+!        do j=i+1,npar
+!          bderi(i,j)=bderi(j,i)
+!        end do
       end do
-      write(inout,*)'    ....OK'
-      write(*,*)'    ....OK'
-      CALL DATE_AND_TIME(VALUES=time_miter2)
-
-      CALL TIMECAL(time_miter1,time_miter2)
-      write(inout,*)'    Computing the partial derivative second part'
-      write(*,*)'    Computing the partial derivative second part'
-
-      CALL DGEMM ('N','N',npar,npar,ndat,one,matinter,npar,aderi,ndat,&
-                  zero,bderi, npar)
-      CALL DATE_AND_TIME(VALUES=time_multi)
-      CALL TIMECAL(time_miter2,time_multi)
+      
       write(inout,*)'    ....OK'
       write(*,*)'    ....OK'
 !=====================================================================
@@ -170,16 +149,12 @@
       write(inout,*)'    Computing the second end member'
       write(*,*)'    Computing the second end member'
       
-      !do i=1,npar
-       ! do j=1,ndat
-        !  h1(i) = h1(i)+aderi(j,i)*punvar(j)*diff(j)
-        !end do
-     ! end do
+      do i=1,npar
+        do j=1,ndat
+          h1(i) = h1(i)+aderi(j,i)*punvar(j)*diff(j)
+        end do
+      end do
 
-      CALL DGEMV('N',npar,ndat,one,matinter,npar,diff,1,zero,h1,1)
-
-      CALL DATE_AND_TIME(VALUES=t_h11)
-      CALL TIMECAL(time_multi,t_h11)
       if(iiter.eq.1) then
          do i=1,npar
             j=1

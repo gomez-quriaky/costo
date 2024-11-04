@@ -5,7 +5,7 @@
 !      INCLUDE 'INTERF/MOD_adnoise.f'
 
 subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-	  							noisegr,signoisgr,rtvar,ncomp)
+	  							noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD)
 
 
 USE MOD_unit
@@ -26,6 +26,10 @@ IMPLICIT NONE
       real(kind=8),DIMENSION(:,:),intent(inout)  :: aderi
       real(kind=8),DIMENSION(:),pointer          :: FX,FY,FZ
       real(kind=8),DIMENSION(:,:),intent(in)     :: xb,yb,zb
+
+      real(kind=8), DIMENSION(:), intent(inout)  ::val_ad_s
+      integer, DIMENSION(:), intent(inout)         :: columnAD
+      integer, DIMENSION(:), intent(inout)         :: rowAD
 
 
 !=====================================================================

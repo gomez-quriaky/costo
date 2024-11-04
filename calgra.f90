@@ -19,7 +19,7 @@
       INCLUDE 'INTERF/MOD_adnoise.f'
 
     SUBROUTINE CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                      noised,signoisd)
+                      noised,signoisd,val_ad_s,columnAD,rowAD)
 
       USE MOD_unit
       USE MOD_delim
@@ -41,6 +41,10 @@
       real(kind=8),DIMENSION(:,:),intent(inout)  :: aderi
       real(kind=8),DIMENSION(:,:),intent(in)     :: xb,yb,zb
       real(kind=8),DIMENSION(:),pointer          :: FX,FY,FZ
+
+      real(kind=8), DIMENSION(:), intent(inout)  :: val_ad_s
+      integer, DIMENSION(:), intent(inout)   :: columnAD
+      integer, DIMENSION(:), intent(inout)   :: rowAD
 !=====================================================================
 ! Declaration of the dummy arguments of CALGRA
 !=====================================================================

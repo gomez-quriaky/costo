@@ -477,7 +477,8 @@
       INCLUDE 'INTERF/MOD_bcalc.f'
       INCLUDE 'INTERF/MOD_dsmooth.f'
       INCLUDE 'INTERF/MOD_vsmooth.f'
-      INCLUDE 'INTERF/MOD_bldmat.f'
+      INCLUDE 'INTERF/MOD_bldmat.f90'
+      !INCLUDE 'INTERF/MOD_bldmat_modf.f90'
       INCLUDE 'INTERF/MOD_invermat.f'
       INCLUDE 'INTERF/MOD_resol.f'
       INCLUDE 'INTERF/MOD_perturb.f'
@@ -486,7 +487,7 @@
 !=====================================================================
 !  BEGINNING OF MAIN PROGRAM
 !=====================================================================
-    PROGRAM joint_inv
+   PROGRAM joint_inv
 
 !=====================================================================
 !  DECLARATION OF COMMUN MODULES and EXPLICIT INTERFACES
@@ -521,6 +522,7 @@
       USE MOD_dsmooth
       USE MOD_vsmooth
       USE MOD_bldmat
+      !USE MOD_bldmat_modf
       USE MOD_invermat
       USE MOD_resol
       USE MOD_perturb
@@ -532,6 +534,7 @@
 !=====================================================================
       IMPLICIT NONE
 
+      INCLUDE 'mkl.fi'
       logical                                 :: temp1
 	
       character(len=1)                           :: answer
@@ -587,12 +590,18 @@
       real(kind=8),DIMENSION(:),pointer       :: rayparm,bazin,weight
       real(kind=8),DIMENSION(:,:),pointer     :: stc,ttt
 
-      integer                           :: ii,ipar,k,l  
-      real(kind=8)                      :: x,y,z  
-      character*3 						:: scount     
-      character*20 						:: file_name  
-      real(kind=8)                      :: dvel     
-      integer                 :: ncomp             
+      integer                                 :: ii,ipar,k,l  
+      real(kind=8)                            :: x,y,z  
+      character*3 						          :: scount     
+      character*20 						          :: file_name  
+      real(kind=8)                            :: dvel     
+      integer                                 :: ncomp     
+      
+   !  Aderi sparse variables
+      
+      real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_ad_s
+      integer, DIMENSION(:), ALLOCATABLE  :: columnAD, rowAD
+      integer                                  ::  A_delta_dim, A_v_dim, A_GR_dim   
 
 !=====================================================================
 ! Calculation of the date and time of the beginning of the run
@@ -604,7 +613,7 @@
       write(*,*) ' '
       write(*,*) ' '
       write(*,*) '    **************************************************************'
-      write(*,*) '    ********** JOINT INVERSION OF TOOM / GRAVI / GRADIO **********'
+      write(*,*) '    ********** JOINT INVERSION OF TOMO / GRAVI / GRADIO **********'
       write(*,*) '    **************************************************************'
       write(*,*) ' '
       write(*,*) ' '
@@ -908,7 +917,7 @@
       write(inout,*)''
       write(inout,'(4x,''Number of parameters to be inverted &
            &per block:'',1x,i5/)') npar1
-     
+           
       select case (ismooth)
              case (0)
                 write(inout,'(4x,''No smoothest model'')')
@@ -924,15 +933,15 @@
 
       select case (regul)
 	     case (0)
-         write(inout,'(4x,''No regularization of the matrix'')')
+            write(inout,'(4x,''No regularization of the matrix'')')
 	     case (1)
-                write(inout,'(4X,''Regularization of the matrix'')')
-         write(inout,'(7x,''-regularization factor:'',1p,E10.2)')&
+            write(inout,'(4X,''Regularization of the matrix'')')
+            write(inout,'(7x,''-regularization factor:'',1p,E10.2)')&
                lambda
 	     case default
-                write(*,*)''
-                write(*,*)'Regul value must be 0 or 1'
-                STOP 'in MAIN! Error in PARAMETER.INP file.'
+            write(*,*)''
+            write(*,*)'Regul value must be 0 or 1'
+            STOP 'in MAIN! Error in PARAMETER.INP file.'
       end select
 
       write(inout,'(4x,''Description of the'',i4,'' layers'')') nlayer
@@ -1059,7 +1068,8 @@
       end if
 
 
-      if((INV.and.INVV.and.INVD).or.(INV.and.INVV.and.INVGR)) then
+      !if((INV.and.INVV.and.INVD).or.(INV.and.INVV.and.INVGR)) then
+      if(INV.and.INVV.and.(INVD .or. INVGR)) then
          CALL READBCO(binit,varb,par,varpar,npar)
       else
          write(inout,*)''
@@ -1102,7 +1112,7 @@
 
 !=====================================================================
 ! END OF INPUTS MODEL AND DATA
-! Checking the good storage of the data
+! Checking the correct storage of the data
 !=====================================================================
       write(inout,*)' '
       write(inout,*)'CHECKING THE GOOD STORAGE OF DATA AND PARAMETERS'
@@ -1121,6 +1131,15 @@
 !=====================================================================
 ! Allocate memory for the ADERI array(nbdata,nbparam) and initialization
 !=====================================================================
+      !Aderi blocks dim
+      A_delta_dim = iend(1)*jend(1) 
+      A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2))
+      A_GR_dim = (iend(3)-ibegin(3))*(jend(3)-jbegin(3))
+
+      ALLOCATE (val_ad_s(A_delta_dim + A_v_dim + A_GR_dim))
+      ALLOCATE (columnAD(A_delta_dim + A_v_dim + A_GR_dim))
+      ALLOCATE (rowAD(A_delta_dim + A_v_dim + A_GR_dim))
+
       ALLOCATE (aderi(ndat,npar))
       ALLOCATE (bderi(npar,npar))
       ALLOCATE (h1(npar))
@@ -1168,7 +1187,8 @@
 ! Construct the file with hit nodes number IBOVE (CALDT)
 ! and find the density blocks constrained (stored in file bloc.nod, FINDNOD)
 !=====================================================================
-         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+         !CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
          if(INVD.or.INVGR) then
             CALL FINDNOD(xb,yb,zb,vxnodes,vynodes,vznodes,nbod,ibove)
 
@@ -1355,12 +1375,12 @@
 
          if(INVD) then
             CALL CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                        noised,signoisd)
+                        noised,signoisd,val_ad_s,columnAD,rowAD)
          end if
 
          if(INVGR) then
             CALL CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                             noisegr,signoisgr,rtvar,ncomp)
+                             noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD)
          end if
 
 !=====================================================================
@@ -1379,7 +1399,7 @@
 !           CALL RAYDENS()
 !        end if
 !=====================================================================
-            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
+            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
          end if
 !=====================================================================
 ! From here now, it only concerns inverse problem of data as the
@@ -1439,44 +1459,44 @@
 
          dtot = ddtot(iiter,4) + vdtot(iiter,4) + bdtot(iiter,3) + grdtot(iiter)
 
-! enregistrement modèle densité
-if(INVD.or.INVGR) then
-    WRITE(scount,'(i3)') iiter
-    file_name  = scount//"_iter_density.res"
-    open(unit = 444,file = file_name,status ='replace') 
-             ii = 0
-	         do i=ibegin(1),iend(1)
-                ii = ii + 1
-                x=(xb(ii,1)+xb(ii,2))*0.5
-                y=(yb(ii,1)+yb(ii,2))*0.5
-                z=(zb(ii,1)+zb(ii,2))*0.5
-                write(444,'(4(f10.3,2x))') x,y,z,par(i)
-	         end do
-    close(444)
-endif
+         ! enregistrement modèle densité
+         if(INVD.or.INVGR) then
+            WRITE(scount,'(i3)') iiter
+            file_name  = scount//"_iter_density.res"
+            open(unit = 444,file = file_name,status ='replace') 
+                     ii = 0
+                     do i=ibegin(1),iend(1)
+                        ii = ii + 1
+                        x=(xb(ii,1)+xb(ii,2))*0.5
+                        y=(yb(ii,1)+yb(ii,2))*0.5
+                        z=(zb(ii,1)+zb(ii,2))*0.5
+                        write(444,'(4(f10.3,2x))') x,y,z,par(i)
+                     end do
+            close(444)
+         endif
 
-! enregistrement modèle vitesse
-if(INVV) then
-    WRITE(scount,'(i3)') iiter
-    file_name  = scount//"_iter_velocity.res"
-    open(unit = 444,file = file_name,status ='replace') 
-             ipar = 0
-	         do k=1,nznode-1
-	            do j=1,nynode
-	               do i=1,nxnode
-                      ipar = ipar + 1
-	                  if(ibove(ipar).ne.0) then
-                         dvel=par(ibove(ipar))/vels(i,j,k,1)*100
-	                  else
-                         dvel=0.d0
-	                  end if
-                      write(velout,'(4(f10.4,2x),10f10.3)') vxnodes(i),vynodes(j),&
-                           vznodes(k),dvel,(vels(i,j,k,l),l=1,iter+1)
-	               end do
-	            end do
-	         end do
-    close(444)
-endif
+         ! enregistrement modèle vitesse
+         if(INVV) then
+            WRITE(scount,'(i3)') iiter
+            file_name  = scount//"_iter_velocity.res"
+            open(unit = 444,file = file_name,status ='replace') 
+                     ipar = 0
+                     do k=1,nznode-1
+                        do j=1,nynode
+                           do i=1,nxnode
+                              ipar = ipar + 1
+                              if(ibove(ipar).ne.0) then
+                                 dvel=par(ibove(ipar))/vels(i,j,k,1)*100
+                              else
+                                 dvel=0.d0
+                              end if
+                              write(velout,'(4(f10.4,2x),10f10.3)') vxnodes(i),vynodes(j),&
+                                    vznodes(k),dvel,(vels(i,j,k,l),l=1,iter+1)
+                           end do
+                        end do
+                     end do
+            close(444)
+         endif
 
 ! enregistrement de la réponse du modèle
 
@@ -1628,6 +1648,11 @@ endif
 !=====================================================================
 ! Deallocation of the allocatable arrays
 !=====================================================================
+      !Aderi sparse
+      DEALLOCATE (val_ad_s)
+      DEALLOCATE(columnAD)
+      DEALLOCATE(rowAD)
+
       DEALLOCATE (ddtot)
       DEALLOCATE (vdtot)
       DEALLOCATE (grdtot)

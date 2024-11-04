@@ -100,8 +100,8 @@
       read(indens,'(a80)') dummy
       read(indens,*)(d0(i),i=1,nlayer)
 
-print*,ddep
-print*,d0
+      print*,ddep
+      print*,d0
       do k=1,nlayer
          read(indens,*) dummy,x_block(k),y_block(k)
          if(x_block(k).gt.temp1 .or. y_block(k).gt.temp2) then

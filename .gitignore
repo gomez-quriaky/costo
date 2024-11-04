@@ -1,7 +1,6 @@
 latex/
 html/
-fichier_input/IBM
-fichier_input/INVERSION_SYN_ALL
-fichier_input/INVERSION_SYN_TRACE
-fichier_input/test_all
+fichier_input/
 *.mod
+*.o
+costo
