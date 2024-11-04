@@ -60,6 +60,9 @@
 
      character*3                         :: scount ! MP new     
      character*20                        :: file_name  ! MP new
+
+     !Aderi sparse index 
+     integer                             :: ind_sp_d
            
 !=====================================================================
 ! Initialization of caldata to 0. and idum for random noise
@@ -125,10 +128,17 @@
 ! Calculation of the derivatives (ADERI array) in mGal/(g/cm**3)
 !=====================================================================
                if(INV) then
+                  ind_sp_d = (idp-1)*nbod + ipar
                   if(rhoinit.ne.0.d0) then
                      aderi(idp,ipar) = g/rhoinit
+                     val_ad_s(ind_sp_d) = g/rhoinit
+                     columnAD(ind_sp_d) = ipar
+                     rowAD(ind_sp_d)   = idp
                   else
                      aderi(idp,ipar) = sum*gamma*si2mg*km2m*1.d3
+                     val_ad_s(ind_sp_d) = sum*gamma*si2mg*km2m*1.d3
+                     columnAD(ind_sp_d) = ipar
+                     rowAD(ind_sp_d)   = idp
                   end if
                end if
 !=====================================================================
