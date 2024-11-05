@@ -17,7 +17,7 @@
 !=====================================================================
 
     SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
-                     val_ad_s,columnAD,rowAD)
+                     val_ad_s,columnAD,rowAD,idx_sp_A)
 
       USE MOD_unit
       USE MOD_delim
@@ -40,14 +40,18 @@
       real(kind=8),DIMENSION(:),intent(inout) 		:: val_ad_s
 	   integer, DIMENSION(:),intent(inout)   :: columnAD
 	   integer, DIMENSION(:), intent(inout)  :: rowAD
+      integer, intent(inout)                 :: idx_sp_A
 
 !=====================================================================
 ! Declaration of the dummy arguments of CALDT
 !=====================================================================
       integer                               :: i,ii,j,jj,ier,ib,jb,m,nray
-      integer                               :: no_event,nnod,num
+      integer                               :: no_event,nnod,num 
       integer                               :: k,x,y,maxi
       integer,DIMENSION(:),ALLOCATABLE      :: count
+
+      !index for Sparse Aderi density
+      integer                                :: ind_sp 
 
       real(kind=8)                          :: der_slow,vinit,vpert
       real(kind=8),DIMENSION(:),ALLOCATABLE :: mean
@@ -98,7 +102,7 @@
 !       - the partial derivative(der_slo)
 !=====================================================================
       do i=1,invnod
-         read(inmat,*,end=100) m,nray,nnod
+         read(inmat,*,end=100) m,nray,nnod 
 !=====================================================================
 ! Correspondance between node number and parameter number is stored 
 ! in ibove
@@ -136,9 +140,10 @@
             jj=jb+no_event
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
+           
 !           val_ad_s(jj) =  -der_slow/(vpert*vpert)
             !rowAD(?) = 
-            caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib)
+            caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib) !replace by sparse matrix*vector
          end do
       end do
 !=====================================================================

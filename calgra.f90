@@ -19,7 +19,7 @@
       INCLUDE 'INTERF/MOD_adnoise.f'
 
     SUBROUTINE CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                      noised,signoisd,val_ad_s,columnAD,rowAD)
+                      noised,signoisd,val_ad_s,columnAD,rowAD,idx_sp_A)
 
       USE MOD_unit
       USE MOD_delim
@@ -45,6 +45,7 @@
       real(kind=8), DIMENSION(:), intent(inout)  :: val_ad_s
       integer, DIMENSION(:), intent(inout)   :: columnAD
       integer, DIMENSION(:), intent(inout)   :: rowAD
+      integer, intent(inout)                 :: idx_sp_A
 !=====================================================================
 ! Declaration of the dummy arguments of CALGRA
 !=====================================================================
@@ -61,8 +62,7 @@
      character*3                         :: scount ! MP new     
      character*20                        :: file_name  ! MP new
 
-     !Aderi sparse index 
-     integer                             :: ind_sp_d
+ 
            
 !=====================================================================
 ! Initialization of caldata to 0. and idum for random noise
@@ -128,17 +128,17 @@
 ! Calculation of the derivatives (ADERI array) in mGal/(g/cm**3)
 !=====================================================================
                if(INV) then
-                  ind_sp_d = (idp-1)*nbod + ipar
+                  idx_sp_A = (idp-1)*nbod + ipar
                   if(rhoinit.ne.0.d0) then
                      aderi(idp,ipar) = g/rhoinit
-                     val_ad_s(ind_sp_d) = g/rhoinit
-                     columnAD(ind_sp_d) = ipar
-                     rowAD(ind_sp_d)   = idp
+                     val_ad_s(idx_sp_A) = g/rhoinit
+                     columnAD(idx_sp_A) = ipar
+                     rowAD(idx_sp_A)   = idp
                   else
                      aderi(idp,ipar) = sum*gamma*si2mg*km2m*1.d3
-                     val_ad_s(ind_sp_d) = sum*gamma*si2mg*km2m*1.d3
-                     columnAD(ind_sp_d) = ipar
-                     rowAD(ind_sp_d)   = idp
+                     val_ad_s(idx_sp_A) = sum*gamma*si2mg*km2m*1.d3
+                     columnAD(idx_sp_A) = ipar
+                     rowAD(idx_sp_A)   = idp
                   end if
                end if
 !=====================================================================

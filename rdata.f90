@@ -1072,9 +1072,9 @@
 !=====================================================================
       maxi = MAXVAL(ieq)
       if(maxi.ne.neq) then
-	write(*,*)''
-	write(*,*)'Error of consistency in RDATA. maxi.ne.neq!'
-	STOP 'in RDATA'
+	      write(*,*)''
+	      write(*,*)'Error of consistency in RDATA. maxi.ne.neq!'
+	      STOP 'in RDATA'
       end if
       write(*,*)'    Number of event = ',maxi
       write(inout,*)'    Number of event = ',maxi

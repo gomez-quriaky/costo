@@ -600,9 +600,8 @@
    !  Aderi sparse variables
       
       real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_ad_s
-      integer, DIMENSION(:), ALLOCATABLE  :: columnAD, rowAD
-      integer                                  ::  A_delta_dim, A_v_dim, A_GR_dim   
-
+      integer, DIMENSION(:), ALLOCATABLE       :: columnAD, rowAD
+      integer                                  :: nnz,idx_sp_A
 !=====================================================================
 ! Calculation of the date and time of the beginning of the run
 !=====================================================================
@@ -1132,13 +1131,16 @@
 ! Allocate memory for the ADERI array(nbdata,nbparam) and initialization
 !=====================================================================
       !Aderi blocks dim
-      A_delta_dim = iend(1)*jend(1) 
-      A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2))
-      A_GR_dim = (iend(3)-ibegin(3))*(jend(3)-jbegin(3))
+      !A_rho_dim = iend(1)*jend(1) 
+      !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
+      !A_GR_dim = (iend(1)-ibegin(1))*(jend(3)-jbegin(3))
+      !A_BC0_dim = (ndat*(iend(3)-ibegin(3)))
+      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2))+&
+            (iend(1)-ibegin(1))*(jend(3)-jbegin(3))+ (ndat*(iend(3)-ibegin(3)))
 
-      ALLOCATE (val_ad_s(A_delta_dim + A_v_dim + A_GR_dim))
-      ALLOCATE (columnAD(A_delta_dim + A_v_dim + A_GR_dim))
-      ALLOCATE (rowAD(A_delta_dim + A_v_dim + A_GR_dim))
+      ALLOCATE (val_ad_s(nnz))
+      ALLOCATE (columnAD(nnz))
+      ALLOCATE (rowAD(nnz))
 
       ALLOCATE (aderi(ndat,npar))
       ALLOCATE (bderi(npar,npar))
@@ -1188,7 +1190,8 @@
 ! and find the density blocks constrained (stored in file bloc.nod, FINDNOD)
 !=====================================================================
          !CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
-         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
+         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,&
+               columnAD,rowAD, idx_sp_A)
          if(INVD.or.INVGR) then
             CALL FINDNOD(xb,yb,zb,vxnodes,vynodes,vznodes,nbod,ibove)
 
@@ -1375,7 +1378,7 @@
 
          if(INVD) then
             CALL CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                        noised,signoisd,val_ad_s,columnAD,rowAD)
+                        noised,signoisd,val_ad_s,columnAD,rowAD, idx_sp_A)
          end if
 
          if(INVGR) then
@@ -1399,7 +1402,8 @@
 !           CALL RAYDENS()
 !        end if
 !=====================================================================
-            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
+            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
+                        val_ad_s,columnAD,rowAD, idx_sp_A)
          end if
 !=====================================================================
 ! From here now, it only concerns inverse problem of data as the
