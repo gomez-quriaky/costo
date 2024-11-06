@@ -1157,6 +1157,10 @@
       bderi(:,:) = 0.d0
       diff(:) =0.d0
 
+      val_ad_s(:) = 0.d0
+      columnAD(:) = 0.d0
+      rowAD(:)    = 0.d0
+
       if(INVV) then
          ALLOCATE (velco(8*nxnode*nynode*nznode))
          ALLOCATE (G(n_data,nnod))
@@ -1375,6 +1379,12 @@
 !=====================================================================
          aderi(:,:) = 0.d0
          bderi(:,:) = 0.d0
+
+
+         val_ad_s(:) = 0.d0
+         columnAD(:) = 0.d0
+         rowAD(:)    = 0.d0
+         idx_sp_A = 0
 
          if(INVD) then
             CALL CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&

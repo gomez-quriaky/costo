@@ -51,7 +51,7 @@
       integer,DIMENSION(:),ALLOCATABLE      :: count
 
       !index for Sparse Aderi density
-      integer                                :: ind_sp 
+      integer                                :: ind_sp_v
 
       real(kind=8)                          :: der_slow,vinit,vpert
       real(kind=8),DIMENSION(:),ALLOCATABLE :: mean
@@ -140,9 +140,11 @@
             jj=jb+no_event
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
-           
-!           val_ad_s(jj) =  -der_slow/(vpert*vpert)
-            !rowAD(?) = 
+            !ind_sp_v = idx_sp_A + (jj-jb-1)*(iend(2)-ibegin(2)) +ib - ibegin(2) 
+            ind_sp_v = idx_sp_A + (no_event -1)*(iend(2)-ibegin(2)) + m
+            val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
+            rowAD(ind_sp_v) = jj
+            columnAD(ind_sp_v) = ib
             caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib) !replace by sparse matrix*vector
          end do
       end do
@@ -155,6 +157,7 @@
               inmat,'. Stooooop in CALDT!'
          STOP
       end if
+
 
 !=====================================================================
 ! The average delay times for every event is zero, thus the
@@ -191,7 +194,8 @@
          caldata(i) = caldata(i) - mean(j)
       end do
 
-
+      ! uodate idx_sp_A
+      idx_sp_A = idx_sp_A + ind_sp_v
       DEALLOCATE(mean)
       DEALLOCATE(count)
 
