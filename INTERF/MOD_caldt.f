@@ -4,7 +4,7 @@
 	module MOD_caldt
 	 interface
           SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
-						val_ad_s,columnAD,rowAD,idx_sp_A)
+						val_ad_s,columnAD,rowAD,idx_sp_A,nnz,ndat,npar)
 	   			integer,intent(in)                         :: invnod
            		integer,DIMENSION(:),intent(inout)         :: ibove
 	   		integer,DIMENSION(:),pointer               :: ieq
@@ -16,6 +16,11 @@
 	   integer, DIMENSION(:),intent(inout)   :: columnAD
 	   integer, DIMENSION(:), intent(inout)  :: rowAD
 	   integer,intent(inout)				 :: idx_sp_A
+	   integer,intent(in)					 :: nnz
+	   integer,intent(in)					 :: ndat
+	   integer, intent(in)					:: npar
+
+
 
 	  END SUBROUTINE CALDT
 	 end interface

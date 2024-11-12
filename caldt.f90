@@ -17,7 +17,7 @@
 !=====================================================================
 
     SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
-                     val_ad_s,columnAD,rowAD,idx_sp_A)
+                     val_ad_s,columnAD,rowAD,idx_sp_A,nnz,ndat,npar)
 
       USE MOD_unit
       USE MOD_delim
@@ -41,6 +41,9 @@
 	   integer, DIMENSION(:),intent(inout)   :: columnAD
 	   integer, DIMENSION(:), intent(inout)  :: rowAD
       integer, intent(inout)                 :: idx_sp_A
+      integer,intent(in)					 :: nnz
+	   integer,intent(in)					 :: ndat
+	   integer, intent(in)					:: npar
 
 !=====================================================================
 ! Declaration of the dummy arguments of CALDT
@@ -52,6 +55,9 @@
 
       !index for Sparse Aderi density
       integer                                :: ind_sp_v
+      !tets if sparse matix*vec give the same (compare with caldata)
+      real(kind=8),DIMENSION(:),ALLOCATABLE   :: cald_sp
+      real(kind=8)                           :: one_a, zero_a
 
       real(kind=8)                          :: der_slow,vinit,vpert
       real(kind=8),DIMENSION(:),ALLOCATABLE :: mean
@@ -141,7 +147,7 @@
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
             !ind_sp_v = idx_sp_A + (jj-jb-1)*(iend(2)-ibegin(2)) +ib - ibegin(2) 
-            ind_sp_v = idx_sp_A + (no_event -1)*(iend(2)-ibegin(2)) + m
+            ind_sp_v = idx_sp_A + (jj-jb -1)*(iend(2)-ibegin(2)) + m +1
             val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
             rowAD(ind_sp_v) = jj
             columnAD(ind_sp_v) = ib
@@ -157,7 +163,24 @@
               inmat,'. Stooooop in CALDT!'
          STOP
       end if
+!==================================================
+! test caldata and sparce matrix*vec
+      write(*,*) 'fin loop, begin mkl'
 
+      allocate(cald_sp(ndat))
+      cald_sp(:) = 0.0d0
+      one_a = 1.0d0
+      zero_a = 0.0d0
+      !call mkl_dcsrmv('N', m, n, alpha, 'G**F', a, indx, pntrb, pntre, x, beta, y)
+      CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+                     nnz,par,zero_a,cald_sp)
+
+      do j=jbegin(2),jend(2)
+         if (caldata(j).ne.cald_sp(j)) then
+            write(*,*)'dofferent values at: ', j
+            EXIT
+         end if
+      end do
 
 !=====================================================================
 ! The average delay times for every event is zero, thus the
