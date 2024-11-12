@@ -129,7 +129,7 @@
                      write(resolvel,'(f10.3,2x,f10.3,2x,i5,''  NI'')') vxnodes(i),&
                           vynodes(j),k
                      write(covarivel,'(f10.3,2x,f10.3,2x,i3,2x,f10.6)') vxnodes(i),&
-                          vynodes(j),k,bderi(ibove(inode),ibove(inode))
+                          vynodes(j),k!,bderi(ibove(inode),ibove(inode))
                   end if
                end do
             end do

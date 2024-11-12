@@ -1034,7 +1034,7 @@
       nbod=0
       nnod=0
 !=====================================================================
-! If inversion of data, need to know the model geometry (parameters 
+! If inversion of data, need to know the model geometry (parameters cald_sp(iend(2)))
 ! location).
 ! If direct problem, need to know the model geometry to pass through
 ! IBEGIN and IEND arrays are initialized here.
@@ -1133,10 +1133,10 @@
       !Aderi blocks dim
       !A_rho_dim = iend(1)*jend(1) 
       !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
-      !A_GR_dim = (iend(1)-ibegin(1))*(jend(3)-jbegin(3))
-      !A_BC0_dim = (ndat*(iend(3)-ibegin(3)))
-      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2))+&
-            (iend(1)-ibegin(1))*(jend(3)-jbegin(3))+ (ndat*(iend(3)-ibegin(3)))
+      !A_GR_dim = (iend(3)-ibegin(3))*ndat
+      
+      nnz = iend(1)*jend(1) + (iend(2)-iend(1))*(jend(2)-jend(1))+&
+            (ndat*(iend(3)-iend(2)))
 
       ALLOCATE (val_ad_s(nnz))
       ALLOCATE (columnAD(nnz))
@@ -1160,6 +1160,7 @@
       val_ad_s(:) = 0.d0
       columnAD(:) = 0.d0
       rowAD(:)    = 0.d0
+      idx_sp_A = iend(1)*jend(1) 
 
       if(INVV) then
          ALLOCATE (velco(8*nxnode*nynode*nznode))
@@ -1195,7 +1196,7 @@
 !=====================================================================
          !CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
          CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,&
-               columnAD,rowAD, idx_sp_A)
+               columnAD,rowAD, idx_sp_A,nnz,ndat,npar)
          if(INVD.or.INVGR) then
             CALL FINDNOD(xb,yb,zb,vxnodes,vynodes,vznodes,nbod,ibove)
 
@@ -1385,7 +1386,7 @@
          columnAD(:) = 0.d0
          rowAD(:)    = 0.d0
          idx_sp_A = 0
-
+         
          if(INVD) then
             CALL CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         noised,signoisd,val_ad_s,columnAD,rowAD, idx_sp_A)
@@ -1413,7 +1414,7 @@
 !        end if
 !=====================================================================
             CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
-                        val_ad_s,columnAD,rowAD, idx_sp_A)
+                        val_ad_s,columnAD,rowAD, idx_sp_A,nnz,ndat,npar)
          end if
 !=====================================================================
 ! From here now, it only concerns inverse problem of data as the
