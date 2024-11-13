@@ -112,8 +112,8 @@
          write(covarivel,*)'Diagonal elements for the covariance matrix'
          write(covarivel,*)'VELOCITY PARAMETERS (x,y,layer,std. err.) '
 
-         print*,"toto1"
-         print*,nxnode,nynode,nznode
+         !print*,"toto1"
+         !print*,nxnode,nynode,nznode
 
          do k=1,nznode-1
             do j=1,nynode
@@ -129,13 +129,13 @@
                      write(resolvel,'(f10.3,2x,f10.3,2x,i5,''  NI'')') vxnodes(i),&
                           vynodes(j),k
                      write(covarivel,'(f10.3,2x,f10.3,2x,i3,2x,f10.6)') vxnodes(i),&
-                          vynodes(j),k!,bderi(ibove(inode),ibove(inode))
+                          vynodes(j),k, 0.0d0!bderi(ibove(inode),ibove(inode))
                   end if
                end do
             end do
          end do
 
-         print*,"toto2"
+         !print*,"toto2"
 
       end if
 !=====================================================================
