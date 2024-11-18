@@ -1127,6 +1127,21 @@
       write(inout,*)'B-COEFF DATA FROM ROW ',jbegin(4),' TO ',jend(4) 
       write(inout,*)'TOTAL NUMBER OF DATA:.....................',ndat   
 
+!=========================
+      write(*,*)' '
+      write(*,*)'CHECKING THE GOOD STORAGE OF DATA AND PARAMETERS'
+      write(*,*)' '
+      write(*,*)'DENSITIES   FROM COL.',ibegin(1),' TO ',iend(1)
+      write(*,*)'VELOCITIES  FROM COL.',ibegin(2),' TO ',iend(2)
+      write(*,*)'dV/dRHO, V0 FROM COL.',ibegin(3),' TO ',iend(3)
+      write(*,*)'NUMBER OF PARAMETERS PER BODY:............',npar1
+      write(*,*)'THEORIC NUMBER OF PARAMETERS TO INVERT:...',npar
+      write(*,*)'GRAVITY   DATA FROM ROW ',jbegin(1),' TO ',jend(1)
+      write(*,*)'DELAYTIME DATA FROM ROW ',jbegin(2),' TO ',jend(2)
+      write(*,*)'FTG DATA FROM ROW ',jbegin(3),' TO ',jend(3)     
+      write(*,*)'B-COEFF DATA FROM ROW ',jbegin(4),' TO ',jend(4) 
+      write(*,*)'TOTAL NUMBER OF DATA:.....................',ndat        
+
 !=====================================================================
 ! Allocate memory for the ADERI array(nbdata,nbparam) and initialization
 !=====================================================================
@@ -1135,8 +1150,12 @@
       !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
       !A_GR_dim = (iend(3)-ibegin(3))*ndat
       
-      nnz = iend(1)*jend(1) + (iend(2)-iend(1))*(jend(2)-jend(1))+&
-            (ndat*(iend(3)-iend(2)))
+      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2))+&
+            (ndat*(iend(3)-ibegin(3)))
+
+      write(*,*) 'value of nnz ', nnz, 'rho ', iend(1)*jend(1) ,&
+                  'v ',(iend(2)-ibegin(2))*(jend(2)-jbegin(2)), &
+                  'gra ',  (ndat*(iend(3)-ibegin(3)))
 
       ALLOCATE (val_ad_s(nnz))
       ALLOCATE (columnAD(nnz))

@@ -37,7 +37,7 @@
       real(kind=8),DIMENSION(:,:),intent(inout)  :: aderi
       real(kind=8),DIMENSION(:,:,:,:),intent(in) :: vels
 
-      real(kind=8),DIMENSION(:),intent(inout) 		:: val_ad_s
+      real(kind=8),DIMENSION(:),intent(inout) 	 :: val_ad_s
 	   integer, DIMENSION(:),intent(inout)   :: columnAD
 	   integer, DIMENSION(:), intent(inout)  :: rowAD
       integer, intent(inout)                 :: idx_sp_A
@@ -55,6 +55,7 @@
 
       !index for Sparse Aderi density
       integer                                :: ind_sp_v
+      integer                                :: check
       !tets if sparse matix*vec give the same (compare with caldata)
       real(kind=8),DIMENSION(:),ALLOCATABLE   :: cald_sp
       real(kind=8)                           :: one_a, zero_a
@@ -147,7 +148,7 @@
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
             !ind_sp_v = idx_sp_A + (jj-jb-1)*(iend(2)-ibegin(2)) +ib - ibegin(2) 
-            ind_sp_v = idx_sp_A + (jj-jb -1)*(iend(2)-ibegin(2)) + m +1
+            ind_sp_v = idx_sp_A + (m -1)*(jend(2)-jb) + jj-jb                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
             val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
             rowAD(ind_sp_v) = jj
             columnAD(ind_sp_v) = ib
@@ -166,6 +167,7 @@
 !==================================================
 ! test caldata and sparce matrix*vec
       write(*,*) 'fin loop, begin mkl'
+      check =0
 
       allocate(cald_sp(ndat))
       cald_sp(:) = 0.0d0
@@ -177,10 +179,14 @@
 
       do j=jbegin(2),jend(2)
          if (caldata(j).ne.cald_sp(j)) then
-            write(*,*)'dofferent values at: ', j
+            check = check +1
             EXIT
          end if
       end do
+
+      write(*,*)'total diff ', check , &
+              ' total ', jend(2) - jbegin(2)
+      
 
 !=====================================================================
 ! The average delay times for every event is zero, thus the

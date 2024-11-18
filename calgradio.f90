@@ -89,34 +89,34 @@ IMPLICIT NONE
         nbn=nbn+1
       endif
 
-         nptsgr=(jend(3)-jbegin(3)+1)/ncomp
+      nptsgr=(jend(3)-jbegin(3)+1)/ncomp
 
-         do idp = jbegin(3),jbegin(3)+nptsgr-1
+      do idp = jbegin(3),jbegin(3)+nptsgr-1
 
-            ndp = ndp+1
-            gFX = FX(idp)
-            gFY = FY(idp)
-            gFZ = FZ(idp)
+         ndp = ndp+1
+         gFX = FX(idp)
+         gFY = FY(idp)
+         gFZ = FZ(idp)
 
 !=====================================================================
 ! loop over the bodies (ipar,ibod)
 !=====================================================================
 !            do ibod = 1,nbod
-            do ibod = 1,nbod               
-               ipar = ibegin(1)+ibod-1
-               rhoinit = par(ipar)
+         do ibod = 1,nbod               
+            ipar = ibegin(1)+ibod-1
+            rhoinit = par(ipar)
 
-               xb1 = xb(ibod,1)
-               xb2 = xb(ibod,2)
-               yb1 = yb(ibod,1)
-               yb2 = yb(ibod,2)
-               zb1 = zb(ibod,1)
-               zb2 = zb(ibod,2)
+            xb1 = xb(ibod,1)
+            xb2 = xb(ibod,2)
+            yb1 = yb(ibod,1)
+            yb2 = yb(ibod,2)
+            zb1 = zb(ibod,1)
+            zb2 = zb(ibod,2)
 
 ! ICI ON APPELLE LE CODE DE CALCUL DIRECT DE LA GRADIO
 ! on peut laisser ça comme tel, il calculera l'ensemble des réponses du tenseur mais ensuite on ne garde que celle
 !           qui nous intéresse. Comme ça pas besoin de modifier la subroutine tesseroid écrite en C
-               call tesseroid(xb1,xb2,yb1,yb2,zb1,zb2,rhoinit,gFX,gFy,-gFZ,&
+            call tesseroid(xb1,xb2,yb1,yb2,zb1,zb2,rhoinit,gFX,gFy,-gFZ,&
                      resxx,resxy,resxz,resyy,resyz,reszz,&
                      res2xx,res2xy,res2xz,res2yy,res2yz,res2zz)              
 
@@ -125,73 +125,73 @@ IMPLICIT NONE
 !  g // en gradio c'est différent, car les données sont rangées de telle façon : 
 !  tout d'abord tous les XX, ensuite tous les XY, ensuite les XZ etc... jusq'à ZZ
 
-         iter=0
-         if (rtvar(nbn+1) .ne. 0) then
-            iter=iter+1
+            iter=0
+            if (rtvar(nbn+1) .ne. 0) then
+               iter=iter+1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) + resxx
-         endif
-         if (rtvar(nbn+2) .ne. 0) then
-            iter=iter+1
+            endif
+            if (rtvar(nbn+2) .ne. 0) then
+               iter=iter+1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) + resxy
-         endif
-         if (rtvar(nbn+3) .ne. 0) then
-            iter=iter+1
+            endif
+            if (rtvar(nbn+3) .ne. 0) then
+               iter=iter+1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) + resxz
-         endif
-         if (rtvar(nbn+4) .ne. 0) then
-            iter=iter+1
+            endif
+            if (rtvar(nbn+4) .ne. 0) then
+               iter=iter+1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) + resyy
-         endif
-         if (rtvar(nbn+5) .ne. 0) then
-            iter=iter+1
+            endif
+            if (rtvar(nbn+5) .ne. 0) then
+               iter=iter+1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) + resyz
-         endif
-         if (rtvar(nbn+6) .ne. 0) then
-            iter=iter+1
+            endif
+            if (rtvar(nbn+6) .ne. 0) then
+               iter=iter+1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) + reszz
-         endif
+            endif
 
 !=====================================================================
 ! In case of direct problem, can add gaussian random noise to the data
 !=====================================================================
-               if((.not.INV) .and. (noisegr.eq.1)) then
-                  CALL ADNOISE(caldata(idp+nptsgr*0),signoisgr,idum)
-                  CALL ADNOISE(caldata(idp+nptsgr*1),signoisgr,idum)
-                  CALL ADNOISE(caldata(idp+nptsgr*2),signoisgr,idum)
-                  CALL ADNOISE(caldata(idp+nptsgr*3),signoisgr,idum)
-                  CALL ADNOISE(caldata(idp+nptsgr*4),signoisgr,idum)
-                  CALL ADNOISE(caldata(idp+nptsgr*5),signoisgr,idum)
-               end if
+            if((.not.INV) .and. (noisegr.eq.1)) then
+               CALL ADNOISE(caldata(idp+nptsgr*0),signoisgr,idum)
+               CALL ADNOISE(caldata(idp+nptsgr*1),signoisgr,idum)
+               CALL ADNOISE(caldata(idp+nptsgr*2),signoisgr,idum)
+               CALL ADNOISE(caldata(idp+nptsgr*3),signoisgr,idum)
+               CALL ADNOISE(caldata(idp+nptsgr*4),signoisgr,idum)
+               CALL ADNOISE(caldata(idp+nptsgr*5),signoisgr,idum)
+            end if
 
 !=====================================================================
 ! Calculation of the derivatives (ADERI array) in mGal/(g/cm**3)
 !=====================================================================
-               if(INV) then
+            if(INV) then
                   if(rhoinit.ne.0.d0) then
                      iter=0
                      if (rtvar(nbn+1) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=resxx/rhoinit
+                        aderi(idp+nptsgr*(iter-1),ipar)=resxx/rhoinit
                      endif
                      if (rtvar(nbn+2) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=resxy/rhoinit
+                        aderi(idp+nptsgr*(iter-1),ipar)=resxy/rhoinit
                      endif
                      if (rtvar(nbn+3) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=resxz/rhoinit
+                        aderi(idp+nptsgr*(iter-1),ipar)=resxz/rhoinit
                      endif
                      if (rtvar(nbn+4) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=resyy/rhoinit
+                        aderi(idp+nptsgr*(iter-1),ipar)=resyy/rhoinit
                      endif
                      if (rtvar(nbn+5) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=resyz/rhoinit
+                        aderi(idp+nptsgr*(iter-1),ipar)=resyz/rhoinit
                      endif
                      if (rtvar(nbn+6) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=reszz/rhoinit
+                        aderi(idp+nptsgr*(iter-1),ipar)=reszz/rhoinit
                      endif
 
                   else
@@ -199,27 +199,27 @@ IMPLICIT NONE
                      iter=0
                      if (rtvar(nbn+1) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=res2xx*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2xx*1.d3
                      endif
                      if (rtvar(nbn+2) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=res2xy*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2xy*1.d3
                      endif
                      if (rtvar(nbn+3) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=res2xz*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2xz*1.d3
                      endif
                      if (rtvar(nbn+4) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=res2yy*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2yy*1.d3
                      endif
                      if (rtvar(nbn+5) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=res2yz*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2yz*1.d3
                      endif
                      if (rtvar(nbn+6) .ne. 0) then
                         iter=iter+1
-                     aderi(idp+nptsgr*(iter-1),ipar)=res2zz*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2zz*1.d3
                      endif
 
                   end if
