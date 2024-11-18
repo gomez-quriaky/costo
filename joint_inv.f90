@@ -529,12 +529,16 @@
       USE MOD_output
       USE MOD_timecal
 
+
+      use ISO_Fortran_env
+
 !=====================================================================
 !  VARIABLES DECLARATION
 !=====================================================================
       IMPLICIT NONE
 
       INCLUDE 'mkl.fi'
+
       logical                                 :: temp1
 	
       character(len=1)                           :: answer
@@ -602,6 +606,13 @@
       real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_ad_s
       integer, DIMENSION(:), ALLOCATABLE       :: columnAD, rowAD
       integer                                  :: nnz,idx_sp_A
+
+      integer                                   :: memory_usage_bytes_Aderi
+      integer                                   :: memory_usage_bytes_A_s
+      integer                                   :: memory_usage_bytes_col_s
+      integer                                   :: memory_usage_bytes_row_s
+      
+
 !=====================================================================
 ! Calculation of the date and time of the beginning of the run
 !=====================================================================
@@ -1636,6 +1647,23 @@
 
       CALL DATE_AND_TIME(VALUES=time_fin)
       CALL TIMECAL(time_ori,time_fin)
+
+      memory_usage_bytes_Aderi = size(ADERI) * storage_size(ADERI) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+
+
+      memory_usage_bytes_A_s= size(val_ad_s) * storage_size(val_ad_s) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI sparse'array val: ", memory_usage_bytes_A_s, " bytes"
+
+      memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) 
+      write (*,*) "Approx. memory usage for 'ADERI sparse' col array: ", memory_usage_bytes_col_s , " bits"
+      write(inout,*) "Approx. memory usage for 'ADERI sparse' col array : ", memory_usage_bytes_col_s, " bits"
+
+      memory_usage_bytes_row_s = size(rowAD) * storage_size(rowAD) 
+      write (*,*) "Approx. memory usage for 'ADERI sparse' row array: ", memory_usage_bytes_row_s , " bits"
+      write(inout,*) "Approx. memory usage for 'ADERI sparse' row array : ", memory_usage_bytes_row_s, " bits"
 
 
       write(*,*)''
