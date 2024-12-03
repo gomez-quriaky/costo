@@ -3,7 +3,7 @@
 
 	  SUBROUTINE CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
 	  							noised,signoisd,rtvar,ncomp,val_ad_s, &
-								columnAD,rowAD)
+								columnAD,rowAD, idx_sp_A)
 
       integer,intent(in)                         :: iiter,nbod,noised
       real(kind=8),intent(in)                    :: signoisd      
@@ -19,6 +19,8 @@
 	real(kind=8),DIMENSION(:), intent(inout) :: val_ad_s
 	integer, DIMENSION(:), intent(inout)	:: columnAD
 	integer, DIMENSION(:), intent(inout)	:: rowAD
+	integer, intent(inout)                  :: idx_sp_A
+
 		
 	  END SUBROUTINE CALGRADIO
 

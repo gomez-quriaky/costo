@@ -1453,7 +1453,7 @@
 
          if(INVGR) then
             CALL CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                             noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD)
+                             noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD, idx_sp_A)
          end if
 
 !=====================================================================

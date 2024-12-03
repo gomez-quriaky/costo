@@ -5,16 +5,16 @@
 !      INCLUDE 'INTERF/MOD_adnoise.f'
 
 subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-	  							noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD)
+	  							noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD, idx_sp_A)
 
 
-USE MOD_unit
-USE MOD_delim
-USE MOD_inv
+   USE MOD_unit
+   USE MOD_delim
+   USE MOD_inv
 
-USE MOD_adnoise
+   USE MOD_adnoise
 
-IMPLICIT NONE
+   IMPLICIT NONE
 
 !=====================================================================
 ! Declaration of the in/out arguments of CALGRA
@@ -27,9 +27,13 @@ IMPLICIT NONE
       real(kind=8),DIMENSION(:),pointer          :: FX,FY,FZ
       real(kind=8),DIMENSION(:,:),intent(in)     :: xb,yb,zb
 
+      real(kind=8),DIMENSION(:),intent(in)    :: rtvar
+      integer,intent(inout)                   :: ncomp    
+
       real(kind=8), DIMENSION(:), intent(inout)  ::val_ad_s
       integer, DIMENSION(:), intent(inout)         :: columnAD
       integer, DIMENSION(:), intent(inout)         :: rowAD
+      integer, intent(inout)                       :: idx_sp_A
 
 
 !=====================================================================
@@ -47,9 +51,9 @@ IMPLICIT NONE
       character*3                         :: scount 
       character*20                        :: file_name  
 
-
-      real(kind=8),DIMENSION(:),intent(in)    :: rtvar         
-      integer,intent(inout)                   :: ncomp         
+      !variable pour index of A_gr_s
+      integer                             :: ind_gr
+             
       real(kind=8)   :: XX,XY,XZ,YY,YZ,ZZ   
 
 !=====================================================================
@@ -66,13 +70,13 @@ IMPLICIT NONE
 !=====================================================================
 ! loop over the data points (idp)
 !=====================================================================
-         moyxx = 0.d0
-         moyxy = 0.d0
-         moyxz = 0.d0
-         moyyy = 0.d0
-         moyyz = 0.d0
-         moyzz = 0.d0
-         ndp = 0
+      moyxx = 0.d0
+      moyxy = 0.d0
+      moyxz = 0.d0
+      moyyy = 0.d0
+      moyyz = 0.d0
+      moyzz = 0.d0
+      ndp = 0
 
 ! la en gravi on fait une boucle sur toutes les mesures. MAIS en gradio, les données
 !  sont rangées de telle façon : tout d'abord tous les XX, ensuite tous les
@@ -167,63 +171,111 @@ IMPLICIT NONE
 ! Calculation of the derivatives (ADERI array) in mGal/(g/cm**3)
 !=====================================================================
             if(INV) then
-                  if(rhoinit.ne.0.d0) then
-                     iter=0
-                     if (rtvar(nbn+1) .ne. 0) then
-                        iter=iter+1
-                        aderi(idp+nptsgr*(iter-1),ipar)=resxx/rhoinit
-                     endif
-                     if (rtvar(nbn+2) .ne. 0) then
-                        iter=iter+1
-                        aderi(idp+nptsgr*(iter-1),ipar)=resxy/rhoinit
-                     endif
-                     if (rtvar(nbn+3) .ne. 0) then
-                        iter=iter+1
-                        aderi(idp+nptsgr*(iter-1),ipar)=resxz/rhoinit
-                     endif
-                     if (rtvar(nbn+4) .ne. 0) then
-                        iter=iter+1
-                        aderi(idp+nptsgr*(iter-1),ipar)=resyy/rhoinit
-                     endif
-                     if (rtvar(nbn+5) .ne. 0) then
-                        iter=iter+1
-                        aderi(idp+nptsgr*(iter-1),ipar)=resyz/rhoinit
-                     endif
-                     if (rtvar(nbn+6) .ne. 0) then
-                        iter=iter+1
-                        aderi(idp+nptsgr*(iter-1),ipar)=reszz/rhoinit
-                     endif
+               if(rhoinit.ne.0.d0) then
+                  iter=0
+                  if (rtvar(nbn+1) .ne. 0) then
+                     iter=iter+1
+                     ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                     val_ad_s = resxx/rhoinit
+                     rowAD = idp+nptsgr*(iter-1)
+                     columnAD = ipar
+                     aderi(idp+nptsgr*(iter-1),ipar)=resxx/rhoinit
+                  endif
+                  if (rtvar(nbn+2) .ne. 0) then
+                     iter=iter+1
+                     ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                     val_ad_s = resxx/rhoinit
+                     rowAD = idp+nptsgr*(iter-1)
+                     columnAD = ipar
+                     aderi(idp+nptsgr*(iter-1),ipar)=resxy/rhoinit
+                  endif
+                  if (rtvar(nbn+3) .ne. 0) then
+                     iter=iter+1
+                     ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                     val_ad_s = resxx/rhoinit
+                     rowAD = idp+nptsgr*(iter-1)
+                     columnAD = ipar
+                     aderi(idp+nptsgr*(iter-1),ipar)=resxz/rhoinit
+                  endif
+                  if (rtvar(nbn+4) .ne. 0) then
+                     iter=iter+1
+                     ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                     val_ad_s = resxx/rhoinit
+                     rowAD = idp+nptsgr*(iter-1)
+                     columnAD = ipar
+                     aderi(idp+nptsgr*(iter-1),ipar)=resyy/rhoinit
+                  endif
+                  if (rtvar(nbn+5) .ne. 0) then
+                     iter=iter+1
+                     ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                     val_ad_s = resxx/rhoinit
+                     rowAD = idp+nptsgr*(iter-1)
+                     columnAD = ipar
+                     aderi(idp+nptsgr*(iter-1),ipar)=resyz/rhoinit
+                  endif
+                  if (rtvar(nbn+6) .ne. 0) then
+                     iter=iter+1
+                     ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                     val_ad_s = resxx/rhoinit
+                     rowAD = idp+nptsgr*(iter-1)
+                     columnAD = ipar
+                     aderi(idp+nptsgr*(iter-1),ipar)=reszz/rhoinit
+                  endif
 
-                  else
+               else
 
-                     iter=0
-                     if (rtvar(nbn+1) .ne. 0) then
+                  iter=0
+                  if (rtvar(nbn+1) .ne. 0) then
                         iter=iter+1
+                        ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                        val_ad_s = resxx/rhoinit
+                        rowAD = idp+nptsgr*(iter-1)
+                        columnAD = ipar
                         aderi(idp+nptsgr*(iter-1),ipar)=res2xx*1.d3
-                     endif
-                     if (rtvar(nbn+2) .ne. 0) then
+                  endif
+                  if (rtvar(nbn+2) .ne. 0) then
                         iter=iter+1
+                        ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                        val_ad_s = resxx/rhoinit
+                        rowAD = idp+nptsgr*(iter-1)
+                        columnAD = ipar
                         aderi(idp+nptsgr*(iter-1),ipar)=res2xy*1.d3
-                     endif
-                     if (rtvar(nbn+3) .ne. 0) then
+                  endif
+                  if (rtvar(nbn+3) .ne. 0) then
                         iter=iter+1
+                        ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                        val_ad_s = resxx/rhoinit
+                        rowAD = idp+nptsgr*(iter-1)
+                        columnAD = ipar
                         aderi(idp+nptsgr*(iter-1),ipar)=res2xz*1.d3
-                     endif
-                     if (rtvar(nbn+4) .ne. 0) then
+                  endif
+                  if (rtvar(nbn+4) .ne. 0) then
                         iter=iter+1
+                        ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                        val_ad_s = resxx/rhoinit
+                        rowAD = idp+nptsgr*(iter-1)
+                        columnAD = ipar
                         aderi(idp+nptsgr*(iter-1),ipar)=res2yy*1.d3
-                     endif
-                     if (rtvar(nbn+5) .ne. 0) then
+                  endif
+                  if (rtvar(nbn+5) .ne. 0) then
                         iter=iter+1
+                        ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                        val_ad_s = resxx/rhoinit
+                        rowAD = idp+nptsgr*(iter-1)
+                        columnAD = ipar
                         aderi(idp+nptsgr*(iter-1),ipar)=res2yz*1.d3
-                     endif
-                     if (rtvar(nbn+6) .ne. 0) then
+                  endif
+                  if (rtvar(nbn+6) .ne. 0) then
                         iter=iter+1
+                        ind_gr = idx_sp_A + (idp - jbegin(3) + nptsgr*(iter-1))*nbod + ipar
+                        val_ad_s = resxx/rhoinit
+                        rowAD = idp+nptsgr*(iter-1)
+                        columnAD = ipar
                         aderi(idp+nptsgr*(iter-1),ipar)=res2zz*1.d3
-                     endif
+                  endif
 
-                  end if
                end if
+            end if
 
 !=====================================================================
 ! End of loop over bodies (ipar)
@@ -235,44 +287,44 @@ IMPLICIT NONE
             iter=0
             if (rtvar(nbn+1) .ne. 0) then
                iter=iter+1
-            moyxx = moyxx + caldata(idp+nptsgr*(iter-1))
+               moyxx = moyxx + caldata(idp+nptsgr*(iter-1))
             else
-            moyxx=0.0
+               moyxx=0.0
             endif
 
             if (rtvar(nbn+2) .ne. 0) then
                iter=iter+1
-            moyxy = moyxy + caldata(idp+nptsgr*(iter-1))
+               moyxy = moyxy + caldata(idp+nptsgr*(iter-1))
             else
-            moyxy=0.0
+               moyxy=0.0
             endif
 
             if (rtvar(nbn+3) .ne. 0) then
                iter=iter+1
-            moyxz = moyxz + caldata(idp+nptsgr*(iter-1))
+               moyxz = moyxz + caldata(idp+nptsgr*(iter-1))
             else
-            moyxz=0.0
+               moyxz=0.0
             endif
 
             if (rtvar(nbn+4) .ne. 0) then
                iter=iter+1
-            moyyy = moyyy + caldata(idp+nptsgr*(iter-1))
+               moyyy = moyyy + caldata(idp+nptsgr*(iter-1))
             else
-            moyyy=0.0
+               moyyy=0.0
             endif
 
             if (rtvar(nbn+5) .ne. 0) then
                iter=iter+1
-            moyyz = moyyz + caldata(idp+nptsgr*(iter-1))
+               moyyz = moyyz + caldata(idp+nptsgr*(iter-1))
             else
-            moyyz=0.0
+               moyyz=0.0
             endif
 
             if (rtvar(nbn+6) .ne. 0) then
                iter=iter+1
-            moyzz = moyzz + caldata(idp+nptsgr*(iter-1))
+               moyzz = moyzz + caldata(idp+nptsgr*(iter-1))
             else
-            moyzz=0.0
+               moyzz=0.0
             endif
 
 !=====================================================================
@@ -280,19 +332,19 @@ IMPLICIT NONE
 !=====================================================================
          end do
 
-moyxx = moyxx/nptsgr
-moyxy = moyxy/nptsgr
-moyxz = moyxz/nptsgr
-moyyy = moyyy/nptsgr
-moyyz = moyyz/nptsgr
-moyzz = moyzz/nptsgr
+      moyxx = moyxx/nptsgr
+      moyxy = moyxy/nptsgr
+      moyxz = moyxz/nptsgr
+      moyyy = moyyy/nptsgr
+      moyyz = moyyz/nptsgr
+      moyzz = moyzz/nptsgr
 
 !=====================================================================
 ! Remove the mean of the calculated data.
 ! As the average data input should be zero, the calculated ones should
 ! be normalized the same way.
 !=====================================================================
-do idp=jbegin(3),jbegin(3)+nptsgr-1
+      do idp=jbegin(3),jbegin(3)+nptsgr-1
 
             iter=0
             if (rtvar(nbn+1) .ne. 0) then
@@ -325,8 +377,13 @@ do idp=jbegin(3),jbegin(3)+nptsgr-1
                caldata(idp+nptsgr*(iter-1)) = caldata(idp+nptsgr*(iter-1)) - moyzz
             endif
 
-end do
+      end do
 
+!=====================================================================
+!                 index for sparse
+!=====================================================================
+      
+      idx_sp_A = idx_sp_A + ind_gr
 !=====================================================================
 ! Store the synthetic FTG data in file FTG.PRED
 !=====================================================================

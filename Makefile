@@ -28,7 +28,7 @@
 # -v verbose mode
 # -f free assume free-form source (f90/95 only)
 #-----------------------------------------------------------
-F77=gfortran
+F77=gfortran #ifx
 #OPTION = -ffree-form
 #OPTION = -fdefault-real-8 -O0 -g  -fbounds-check -Wall -Wtabs -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace -ftrapv -fimplicit-none 
 MKLROOT = /opt/intel/oneapi/mkl/2024.2
@@ -97,7 +97,7 @@ costo ::
 	gcc -c lib_C/grav_prism.c -Ilib_C
 	gcc -c tesseroid.c -Ilib_C
 
-	$(F77) $(FFLAGS) $(LIBS) -o costo $(USER_OBJ_MAIN) $(USER_OBJ_ALL)  $(LDFLAGS) tesseroid.o constants.o geometry.o grav_prism.o 
+	$(F77)  $(FFLAGS) $(LIBS) -o costo $(USER_OBJ_MAIN) $(USER_OBJ_ALL)  $(LDFLAGS) tesseroid.o constants.o geometry.o grav_prism.o 
 
 doc ::
 	doxygen Doxyfile_costo

@@ -47,8 +47,8 @@
       USE MOD_dgemm
       USE MOD_dgemv
 
-      USE BLAS95
-      USE F95_precision
+      !USE BLAS95
+      !USE F95_precision
 
       IMPLICIT NONE
 

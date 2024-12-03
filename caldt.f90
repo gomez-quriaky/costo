@@ -16,12 +16,16 @@
 ! calls none
 !=====================================================================
 
+      INCLUDE 'INTERF/MOD_dgemv.f'
+
     SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
                      val_ad_s,columnAD,rowAD,idx_sp_A,nnz,ndat,npar)
 
       USE MOD_unit
       USE MOD_delim
       USE MOD_layer
+
+      USE MOD_dgemv
       
       IMPLICIT NONE
 
@@ -57,7 +61,7 @@
       integer                                :: ind_sp_v
       integer                                :: check
       !tets if sparse matix*vec give the same (compare with caldata)
-      real(kind=8),DIMENSION(:),ALLOCATABLE   :: cald_sp
+      real(kind=8),DIMENSION(:),ALLOCATABLE   :: cald_sp, cald_blas
       real(kind=8)                           :: one_a, zero_a
 
       real(kind=8)                          :: der_slow,vinit,vpert
@@ -67,6 +71,10 @@
 !=====================================================================
       ibove(:) = 0
       caldata(jbegin(2):jend(2)) = 0.d0
+
+   !constant for sparse blas multiplication
+      one_a = 1.0d0
+      zero_a = 0.0d0
 
       write(*,*)''
       write(*,*)'FORWARD CALCULATION OF SYNTHETIC DELAY TIMES'
@@ -147,8 +155,7 @@
             jj=jb+no_event
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
-            !ind_sp_v = idx_sp_A + (jj-jb-1)*(iend(2)-ibegin(2)) +ib - ibegin(2) 
-            ind_sp_v = idx_sp_A + (m -1)*(jend(2)-jb) + jj-jb                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+            ind_sp_v = idx_sp_A + (m-1)*(jend(2)-jb) + no_event                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
             val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
             rowAD(ind_sp_v) = jj
             columnAD(ind_sp_v) = ib
@@ -165,27 +172,36 @@
          STOP
       end if
 !==================================================
+
+!CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+       !              nnz,par,zero_a,caldata)
+
+
 ! test caldata and sparce matrix*vec
-      write(*,*) 'fin loop, begin mkl'
-      check =0
+    !  write(*,*) 'fin loop, begin mkl'
+     ! check =0
 
-      allocate(cald_sp(ndat))
-      cald_sp(:) = 0.0d0
-      one_a = 1.0d0
-      zero_a = 0.0d0
-      !call mkl_dcsrmv('N', m, n, alpha, 'G**F', a, indx, pntrb, pntre, x, beta, y)
-      CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
-                     nnz,par,zero_a,cald_sp)
 
-      do j=jbegin(2),jend(2)
-         if (caldata(j).ne.cald_sp(j)) then
-            check = check +1
-            EXIT
-         end if
-      end do
+      !allocate(cald_sp(ndat))
+      !cald_sp(:) = 0.0d0
+      !one_a = 1.0d0
+      !zero_a = 0.0d0
+      !call mkl_dcsrmv('N', m, n, alpha, 'G**F', val_a, row_a_s, , x, beta, y)
+      !CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+       !              nnz,par,zero_a,cald_sp)
 
-      write(*,*)'total diff ', check , &
-              ' total ', jend(2) - jbegin(2)
+      !CALL DGEMV('N',npar,ndat,one,matinter,npar,diff,1,zero,h1,1)
+
+      !do j=jbegin(2),jend(2)
+      !   if (caldata(j).ne.cald_sp(j)) then
+      !      check = check +1
+      !      print *, 'no sparsze result', caldata(j), 'sparse ', cald_sp(j)
+      !      !EXIT
+      !   end if
+      !end do
+
+      !write(*,*)'total diff ', check , &
+       !       ' total ', jend(2) - jbegin(2)
       
 
 !=====================================================================
