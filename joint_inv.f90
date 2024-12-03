@@ -811,9 +811,9 @@
          	else 
                 read(inpar,*) modvar(i),rtvar(i)
          	endif
-     	else
+     	   else
             read(inpar,*) modvar(i),rtvar(i)
-     	endif
+      	endif
          if(modvar(i).ne.0 .and. modvar(i).ne.1) then
             write(*,*)''
             write(*,*)'Allowed values for MODVAR is 0 or 1.'
@@ -1159,14 +1159,14 @@
       !Aderi blocks dim
       !A_rho_dim = iend(1)*jend(1) 
       !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
-      !A_GR_dim = (iend(3)-ibegin(3))*ndat
+      !A_B_dim = (iend(3)-ibegin(3))*ndat
       
-      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2))+&
-            (ndat*(iend(3)-ibegin(3)))
+      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) !+&
+            !(ndat*(iend(3)-ibegin(3)))
 
       write(*,*) 'value of nnz ', nnz, 'rho ', iend(1)*jend(1) ,&
-                  'v ',(iend(2)-ibegin(2))*(jend(2)-jbegin(2)), &
-                  'gra ',  (ndat*(iend(3)-ibegin(3)))
+                  'v ',(iend(2)-ibegin(2))*(jend(2)-jbegin(2)) !, &
+                  !'gra ',  (ndat*(iend(3)-ibegin(3)))
 
       ALLOCATE (val_ad_s(nnz))
       ALLOCATE (columnAD(nnz))
@@ -1188,9 +1188,38 @@
       diff(:) =0.d0
 
       val_ad_s(:) = 0.d0
-      columnAD(:) = 0.d0
-      rowAD(:)    = 0.d0
+      columnAD(:) = 0
+      rowAD(:)    = 0
       idx_sp_A = iend(1)*jend(1) 
+
+      memory_usage_bytes_Aderi = npar*ndat/(1.d-9)! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+
+
+      memory_usage_bytes_A_s= size(val_ad_s) * storage_size(val_ad_s) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
+
+      write(*,*) 'nnz ', nnz ,  'size As', size(val_ad_s) ,'size col_a ', size(columnAD) , &
+               'storage_size col_s ' , storage_size(columnAD), 'COO = ', nnz*16/1.d-9
+         
+      write(inout,*)  'nnz ', nnz ,  'size As', size(val_ad_s) ,'size col_a ', size(columnAD) , &
+      'storage_size col_s ' , storage_size(columnAD)
+
+      memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI sparse' array col: ", memory_usage_bytes_col_s, " bytes"
+
+
+
+
+     ! memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) 
+     ! write (*,*) "Approx. memory usage for 'ADERI sparse' col array: ", memory_usage_bytes_col_s , " bits"
+
+
+      !memory_usage_bytes_row_s = size(rowAD) * storage_size(rowAD) 
+      !write (*,*) "Approx. memory usage for 'ADERI sparse' row array: ", memory_usage_bytes_row_s , " bits"
+  
 
       if(INVV) then
          ALLOCATE (velco(8*nxnode*nynode*nznode))
@@ -1413,8 +1442,8 @@
 
 
          val_ad_s(:) = 0.d0
-         columnAD(:) = 0.d0
-         rowAD(:)    = 0.d0
+         columnAD(:) = 0
+         rowAD(:)    = 0
          idx_sp_A = 0
          
          if(INVD) then
@@ -1607,7 +1636,7 @@
 !=====================================================================
 ! inversion of the matrix to obtain modelparameters estimation
 ! and calulation of the computing time
-!=====================================================================
+!=====================================================================/..
          CALL INVERMAT(bderi,npar,iiter,regul,lambda)
 
          CALL DATE_AND_TIME(VALUES=time_inv)
@@ -1657,13 +1686,18 @@
       write (*,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
       write(inout,*) "Approx. memory usage for 'ADERI sparse'array val: ", memory_usage_bytes_A_s, " bytes"
 
-      memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) 
-      write (*,*) "Approx. memory usage for 'ADERI sparse' col array: ", memory_usage_bytes_col_s , " bits"
-      write(inout,*) "Approx. memory usage for 'ADERI sparse' col array : ", memory_usage_bytes_col_s, " bits"
 
-      memory_usage_bytes_row_s = size(rowAD) * storage_size(rowAD) 
-      write (*,*) "Approx. memory usage for 'ADERI sparse' row array: ", memory_usage_bytes_row_s , " bits"
-      write(inout,*) "Approx. memory usage for 'ADERI sparse' row array : ", memory_usage_bytes_row_s, " bits"
+
+      write(*,*) 'nnz ', nnz ,  'size As', size(val_ad_s) ,'size col_a ', size(columnAD) , &
+               'storage_size col_s ' , storage_size(columnAD) 
+
+     !memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) 
+     ! write (*,*) "Approx. memory usage for 'ADERI sparse' col array: ", memory_usage_bytes_col_s , " bits"
+      !write(inout,*) "Approx. memory usage for 'ADERI sparse' col array : ", memory_usage_bytes_col_s, " bits"
+
+      !memory_usage_bytes_row_s = size(rowAD) * storage_size(rowAD) 
+      !write (*,*) "Approx. memory usage for 'ADERI sparse' row array: ", memory_usage_bytes_row_s , " bits"
+      !write(inout,*) "Approx. memory usage for 'ADERI sparse' row array : ", memory_usage_bytes_row_s, " bits"
 
 
       write(*,*)''
