@@ -62,7 +62,7 @@
       integer                                :: check
       !tets if sparse matix*vec give the same (compare with caldata)
       real(kind=8),DIMENSION(:),ALLOCATABLE   :: cald_sp, cald_blas
-      real(kind=8)                           :: one_a, zero_a
+      real(kind=8)                            :: one_a, zero_a
 
       real(kind=8)                          :: der_slow,vinit,vpert
       real(kind=8),DIMENSION(:),ALLOCATABLE :: mean
@@ -173,8 +173,13 @@
       end if
 !==================================================
 
-!CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
-       !              nnz,par,zero_a,caldata)
+! the following multiplication was equivalent for a vector equal to 0,
+      !check if caldata full give the same
+
+
+   !CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+   !                  nnz,par,zero_a,caldata)
+    !===========================================================  
 
 
 ! test caldata and sparce matrix*vec
@@ -190,7 +195,6 @@
       !CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
        !              nnz,par,zero_a,cald_sp)
 
-      !CALL DGEMV('N',npar,ndat,one,matinter,npar,diff,1,zero,h1,1)
 
       !do j=jbegin(2),jend(2)
       !   if (caldata(j).ne.cald_sp(j)) then
