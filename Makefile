@@ -31,12 +31,15 @@
 F77=gfortran #ifx
 #OPTION = -ffree-form
 #OPTION = -fdefault-real-8 -O0 -g  -fbounds-check -Wall -Wtabs -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace -ftrapv -fimplicit-none 
-MKLROOT = /opt/intel/oneapi/mkl/2024.2
+#
+MKLROOT = /opt/intel/oneapi/mkl/latest
 #FFLAGS = -I$(HOME)/include/mkl/intel64/lp64 -fdefault-integer-8  -I$(MKLROOT)/include
-FFLAGS = -g -I$(HOME)/include/mkl/intel64/lp64   -I$(MKLROOT)/include
-#LIBS = -L$(HOME)/lib/intel64/libmkl_blas_ilp64.a
+FFLAGS = -g 
+
+INCLUDE= -I$(MKLROOT)/include -Isblas
 #LDFLAGS =   -m64 -Wl,--start-group ${MKLROOT}/lib/libmkl_gf_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
-LDFLAGS =  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+LDFLAGS =  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+#  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
 #F77=ifort
 # option de compil anne
 # =  -O3 -xhost -ipo -fp-model precise -heap-arrays
@@ -44,6 +47,7 @@ USER_OBJ_MAIN = \
 		joint_inv.f90
 
 USER_OBJ_ALL = \
+		sblas/mkl_spblas.f90 \
 		read_layer.f90 \
 		read_modd.f90 \
 		read_modv.f90 \
@@ -97,7 +101,9 @@ costo ::
 	gcc -c lib_C/grav_prism.c -Ilib_C
 	gcc -c tesseroid.c -Ilib_C
 
-	$(F77)  $(FFLAGS) $(LIBS) -o costo $(USER_OBJ_MAIN) $(USER_OBJ_ALL)  $(LDFLAGS) tesseroid.o constants.o geometry.o grav_prism.o 
+	 
+
+	$(F77)  $(FFLAGS)  -o costo $(USER_OBJ_MAIN) $(USER_OBJ_ALL) $(INCLUDE) $(LDFLAGS)  tesseroid.o constants.o geometry.o grav_prism.o 
 
 doc ::
 	doxygen Doxyfile_costo
@@ -105,6 +111,7 @@ doc ::
 clean ::
 	rm mod_*.mod
 	rm *.o
+	rm mkl_spblas.mod
 	rm costo
 
 

@@ -453,6 +453,9 @@
       INCLUDE 'DECLA/MOD_delim.f'
       INCLUDE 'DECLA/MOD_vdata.f'
       INCLUDE 'DECLA/MOD_iloc.f'
+
+!=====================================================================
+     !INCLUDE 'sblas/mkl_spblas.f90'
 !=====================================================================
 !  INCLUDE OF MODULE FOR EXPLICIT INTERFACE (SUBROUTINES)
 !=====================================================================
@@ -478,7 +481,7 @@
       INCLUDE 'INTERF/MOD_dsmooth.f'
       INCLUDE 'INTERF/MOD_vsmooth.f'
       INCLUDE 'INTERF/MOD_bldmat.f90'
-      !INCLUDE 'INTERF/MOD_bldmat_modf.f90'
+      INCLUDE 'INTERF/MOD_bldmat_modf.f90'
       INCLUDE 'INTERF/MOD_invermat.f'
       INCLUDE 'INTERF/MOD_resol.f'
       INCLUDE 'INTERF/MOD_perturb.f'
@@ -487,11 +490,14 @@
 !=====================================================================
 !  BEGINNING OF MAIN PROGRAM
 !=====================================================================
-   PROGRAM joint_inv
+       
+      PROGRAM joint_inv
 
 !=====================================================================
 !  DECLARATION OF COMMUN MODULES and EXPLICIT INTERFACES
 !=====================================================================
+
+
       USE MOD_unit
       USE MOD_layer
       USE MOD_size
@@ -531,13 +537,14 @@
 
 
       use ISO_Fortran_env
+      USE MKL_SPBLAS
 
 !=====================================================================
 !  VARIABLES DECLARATION
 !=====================================================================
       IMPLICIT NONE
 
-      INCLUDE 'mkl.fi'
+      !INCLUDE 'mkl.fi'
 
       logical                                 :: temp1
 	
@@ -606,6 +613,10 @@
       real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_ad_s
       integer, DIMENSION(:), ALLOCATABLE       :: columnAD, rowAD
       integer                                  :: nnz,idx_sp_A
+
+      !type(sparse_matrix_t)                     :: Aderi_crs
+      !type(sparse_matrix_t)                     :: bderi_crs
+      integer                                   :: status_mkl
 
       integer                                   :: memory_usage_bytes_Aderi
       integer                                   :: memory_usage_bytes_A_s
@@ -792,11 +803,11 @@
       ALLOCATE (amask(nfil))
       ALLOCATE (npts(nfil))
 
-	  if(INVGR) then
+	   if(INVGR) then
         ALLOCATE (rtvar(nfil+5))
       elseif(.not.INVGR) then
         ALLOCATE (rtvar(nfil))
-  	  endif
+  	   endif
 
       do i=1,nfil
          read(inpar,'(/a80)') dummy
@@ -1161,12 +1172,12 @@
       !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
       !A_B_dim = (iend(3)-ibegin(3))*ndat
       
-      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) !+&
-            !(ndat*(iend(3)-ibegin(3)))
+      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) +&
+            (iend(1)*(jend(3)-jbegin(3)))
 
       write(*,*) 'value of nnz ', nnz, 'rho ', iend(1)*jend(1) ,&
-                  'v ',(iend(2)-ibegin(2))*(jend(2)-jbegin(2)) !, &
-                  !'gra ',  (ndat*(iend(3)-ibegin(3)))
+                  'v ',(iend(2)-ibegin(2))*(jend(2)-jbegin(2)) , &
+                  'gra ',  (iend(1)*(jend(3)-jbegin(3)))
 
       ALLOCATE (val_ad_s(nnz))
       ALLOCATE (columnAD(nnz))
@@ -1475,6 +1486,9 @@
             CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
                         val_ad_s,columnAD,rowAD, idx_sp_A,nnz,ndat,npar)
          end if
+
+
+
 !=====================================================================
 ! From here now, it only concerns inverse problem of data as the
 ! forward problems has stopped before in CALGRA and CALDT subroutines
@@ -1629,7 +1643,8 @@
          CALL BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                      npar1,ndat,smooth,iside,jside,ivside,jvside,&
                      xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                     ddvr,nbod)
+                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz)!
+                     !, Aderi_crs)
                      
          CALL DATE_AND_TIME(VALUES=time_blt2)
          CALL TIMECAL(time_blt1,time_blt2)
@@ -1748,6 +1763,8 @@
       DEALLOCATE (val_ad_s)
       DEALLOCATE(columnAD)
       DEALLOCATE(rowAD)
+
+      !status_mkl = mkl_sparse_destroy(Aderi_crs)
 
       DEALLOCATE (ddtot)
       DEALLOCATE (vdtot)
