@@ -37,8 +37,8 @@
       SUBROUTINE BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                         npar1,ndat,smooth,iside,jside,ivside,jvside,&
                         xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                        ddvr,nbod,val_ad_s, rowAD, columnAD, nnz, &
-                        AtCA, B_sp)
+                        ddvr,nbod,val_ad_s, rowAD, columnAD, nnz )!, &
+                        !AtCA, B_sp)
         
       USE MOD_delim
       USE MOD_unit
@@ -77,8 +77,8 @@
       integer, DIMENSION(:), intent(in)          :: columnAD
       integer, intent(in)                        :: nnz
 
-      type(SPARSE_MATRIX_T), intent(out)         :: B_sp
-      type(SPARSE_MATRIX_T), intent(out)         :: AtCA 
+      !type(SPARSE_MATRIX_T), intent(out)         :: B_sp
+      !type(SPARSE_MATRIX_T), intent(out)         :: AtCA 
 !=====================================================================
 ! Declaration of the dummy arguments of BLDMAT
 !=====================================================================
@@ -102,6 +102,12 @@
       type(SPARSE_MATRIX_T)                      :: Aderi_w_crs
       type(SPARSE_MATRIX_T)                        :: Aderi_coo
       integer                                    :: status
+
+      type(SPARSE_MATRIX_T)                       :: B_sp
+      type(SPARSE_MATRIX_T)                       :: AtCA 
+      type(MATRIX_DESCR)                           :: descr
+      
+      
 !=====================================================================
 ! Initialization of some arrays:
 ! VECTRA = sum of the H1 terms for each parameter type (dens., vel...)
@@ -190,7 +196,7 @@
 
       status =0
       !!! notice that in order to obtain a convertion, the finteger must be 8
-      status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_TRANSPOSE, Aderi_w_crs)
+      status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_NON_TRANSPOSE, Aderi_w_crs)
 
       print *, 'CRS w', status
 
@@ -211,13 +217,19 @@
 
       !stat = mkl_sparse_spmm (operation, A, B, C)
 
-      status = mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, &
-                  Aderi_w_crs, Aderi_crs, AtCA) !&
-                  !SPARSE_LAYOUT_COLUMN_MAJOR,bderi, npar)
+      status = mkl_sparse_spmm(SPARSE_OPERATION_TRANSPOSE, &
+                  Aderi_w_crs, Aderi_crs, AtCA) 
 
       print *, 'result  mm', status
-      !CALL DGEMM ('N','N',npar,npar,ndat,one,matinter,npar,aderi,ndat,&
-                !  zero,bderi, npar)
+
+      !stat = mkl_sparse_d_mv (operation, alpha, A, descr, x, beta, y)
+      descr%type = SPARSE_MATRIX_TYPE_GENERAL
+
+      status = mkl_sparse_d_mv (SPARSE_OPERATION_NON_TRANSPOSE, one, Aderi_w_crs, &
+                        descr,diff, zero, h1)
+      
+      print *, 'result  mv', status
+      !CALL DGEMV('N',npar,ndat,one,matinter,npar,diff,1,zero,h1,1)
       CALL DATE_AND_TIME(VALUES=time_fin_coo)
       CALL TIMECAL(time_coo,time_fin_coo)
 
