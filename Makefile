@@ -36,7 +36,7 @@ MKLROOT = /opt/intel/oneapi/mkl/latest
 #FFLAGS = -I$(HOME)/include/mkl/intel64/lp64 -fdefault-integer-8  -I$(MKLROOT)/include
 FFLAGS = -g 
 
-INCLUDE= -I$(MKLROOT)/include -Isblas
+INCLUDE=  -fdefault-integer-8  -I$(MKLROOT)/include -Isblas
 #LDFLAGS =   -m64 -Wl,--start-group ${MKLROOT}/lib/libmkl_gf_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
 LDFLAGS =  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
 #  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl

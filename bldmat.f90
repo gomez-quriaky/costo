@@ -188,7 +188,7 @@
       print *, 'Coo ', status
 
       status =0
-
+      !!! notice that in order to obtain a convertion, the finteger must be 8
       status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_NON_TRANSPOSE, Aderi_w_crs)
 
       print *, 'CRS w', status
