@@ -4,12 +4,13 @@
 	module MOD_bldmat
 
      !USE MKL_SPBLAS
+     include 'mkl.fi' 
 	 interface
 	  SUBROUTINE BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                         npar1,ndat,smooth,iside,jside,ivside,jvside,&
                         xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                        ddvr,nbod, val_ad_s, rowAD, columnAD, nnz)
-                        !, Aderi_crs)
+                        ddvr,nbod, val_ad_s, rowAD, columnAD, nnz ,&
+                        AtCA, B_sp )
 	   integer,intent(in)                         :: iiter,npar,npar1,ndat
            integer,intent(in)                         :: ismooth,nbod
            integer,DIMENSION(:),intent(in)            :: iside,ivside,ibove,ilay
@@ -26,7 +27,8 @@
            integer, DIMENSION(:), intent(in)          :: rowAD
            integer, DIMENSION(:), intent(in)          :: columnAD
            integer, intent(in)                        :: nnz
-          !type(sparse_matrix_t)                      :: Aderi_crs
+          type(sparse_matrix_t), intent(out)          :: AtCA
+          type(sparse_matrix_t), intent(out)          :: B_sp
 	  END SUBROUTINE BLDMAT
 	 end interface
 	end module MOD_bldmat

@@ -37,8 +37,8 @@
       SUBROUTINE BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                         npar1,ndat,smooth,iside,jside,ivside,jvside,&
                         xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                        ddvr,nbod,val_ad_s, rowAD, columnAD, nnz)
-                        !Aderi_crs)
+                        ddvr,nbod,val_ad_s, rowAD, columnAD, nnz, &
+                        AtCA, B_sp)
         
       USE MOD_delim
       USE MOD_unit
@@ -77,7 +77,8 @@
       integer, DIMENSION(:), intent(in)          :: columnAD
       integer, intent(in)                        :: nnz
 
-      
+      type(SPARSE_MATRIX_T), intent(out)         :: B_sp
+      type(SPARSE_MATRIX_T), intent(out)         :: AtCA 
 !=====================================================================
 ! Declaration of the dummy arguments of BLDMAT
 !=====================================================================
@@ -97,7 +98,7 @@
       real(kind=8), DIMENSION(nnz)               :: weighted_values
       type(SPARSE_MATRIX_T)                      ::Aderi_crs
       type(SPARSE_MATRIX_T)                       :: Aderi_coo_t
-      type(SPARSE_MATRIX_T)                       :: B_sp
+      
       type(SPARSE_MATRIX_T)                      :: Aderi_w_crs
       type(SPARSE_MATRIX_T)                        :: Aderi_coo
       integer                                    :: status
@@ -189,7 +190,7 @@
 
       status =0
       !!! notice that in order to obtain a convertion, the finteger must be 8
-      status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_NON_TRANSPOSE, Aderi_w_crs)
+      status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_TRANSPOSE, Aderi_w_crs)
 
       print *, 'CRS w', status
 
@@ -207,8 +208,11 @@
 
       write(inout,*)'    Computing the partial derivative second part'
       write(*,*)'    Computing the partial derivative second part'
-      !status = mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, &
-       !           Aderi_w_crs, Aderi_crs, B_sp)! &
+
+      !stat = mkl_sparse_spmm (operation, A, B, C)
+
+      status = mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, &
+                  Aderi_w_crs, Aderi_crs, AtCA) !&
                   !SPARSE_LAYOUT_COLUMN_MAJOR,bderi, npar)
 
       print *, 'result  mm', status
@@ -409,8 +413,8 @@
 
       end if
 
-      status = mkl_sparse_destroy(B_sp)
-      !status = mkl_sparse_destroy(Aderi_w_crs)
-      !status = mkl_sparse_destroy(Aderi_crs)
+      
+      status = mkl_sparse_destroy(Aderi_w_crs)
+      status = mkl_sparse_destroy(Aderi_crs)
 
       END SUBROUTINE BLDMAT

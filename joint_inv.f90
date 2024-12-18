@@ -614,8 +614,8 @@
       integer, DIMENSION(:), ALLOCATABLE       :: columnAD, rowAD
       integer                                  :: nnz,idx_sp_A
 
-      !type(sparse_matrix_t)                     :: Aderi_crs
-      !type(sparse_matrix_t)                     :: bderi_crs
+      type(sparse_matrix_t)                     :: AtCA
+      type(sparse_matrix_t)                     :: b_sp
       integer                                   :: status_mkl
 
       integer                                   :: memory_usage_bytes_Aderi
@@ -1643,8 +1643,8 @@
          CALL BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                      npar1,ndat,smooth,iside,jside,ivside,jvside,&
                      xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz)!
-                     !, Aderi_crs)
+                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz,&
+                     AtCA,B_sp)
                      
          CALL DATE_AND_TIME(VALUES=time_blt2)
          CALL TIMECAL(time_blt1,time_blt2)
