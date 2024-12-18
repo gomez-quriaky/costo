@@ -119,7 +119,7 @@
             do j=1,nynode
                do i=1,nxnode
                   inode=inode+1
-                  print*,i,j,k,inode
+                  !print*,i,j,k,inode
                   if (ibove(inode).ne.0) then
                      write(resolvel,'(f10.3,2x,f10.3,2x,i3,2x,f10.6)') vxnodes(i),&
                           vynodes(j),k,matres(ibove(inode),ibove(inode))

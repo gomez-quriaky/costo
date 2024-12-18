@@ -31,11 +31,14 @@
       INCLUDE 'INTERF/MOD_denvel.f'
       INCLUDE 'INTERF/MOD_dgemm.f'
       INCLUDE 'INTERF/MOD_dgemv.f'
+      !INCLUDE 'sblas/mkl_spblas.f90'
+      
       
       SUBROUTINE BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                         npar1,ndat,smooth,iside,jside,ivside,jvside,&
                         xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                        ddvr,nbod)
+                        ddvr,nbod,val_ad_s, rowAD, columnAD, nnz, &
+                        AtCA, B_sp)
         
       USE MOD_delim
       USE MOD_unit
@@ -47,8 +50,8 @@
       USE MOD_dgemm
       USE MOD_dgemv
 
-      USE BLAS95
-      USE F95_precision
+      USE MKL_SPBLAS
+      !USE F95_precision
 
       IMPLICIT NONE
 
@@ -68,21 +71,37 @@
       real(kind=8),DIMENSION(:),intent(inout)    :: h1
       real(kind=8),DIMENSION(:,:),intent(inout)  :: bderi
       real(kind=8),DIMENSION(:),pointer          :: punvar
+
+      real(kind=8), DIMENSION(:), intent(in)     :: val_ad_s
+      integer, DIMENSION(:), intent(in)          :: rowAD
+      integer, DIMENSION(:), intent(in)          :: columnAD
+      integer, intent(in)                        :: nnz
+
+      type(SPARSE_MATRIX_T), intent(out)         :: B_sp
+      type(SPARSE_MATRIX_T), intent(out)         :: AtCA 
 !=====================================================================
 ! Declaration of the dummy arguments of BLDMAT
 !=====================================================================
       integer                                    :: i,ii,j,k,l,dcont,vcont
       integer,DIMENSION(8)                       :: time_miter1,time_miter2, time_multi
-      integer,DIMENSION(8)                       :: t_h11,t_h12 
+      integer,DIMENSION(8)                       :: t_h11,t_h12, time_coo, time_fin_coo 
 
       real(kind=8)                               :: dsum,vsum
       real(kind=8)                               :: tracetot,vectrtot
       real(kind=8),DIMENSION(4)                  :: traces,vectrs
       real(kind=8),DIMENSION(3)                  :: itrace
       real(kind=8),DIMENSION(3,4)                :: vectra,trace
+
       real(kind=8),DIMENSION(npar,ndat)          :: matinter !to compute aderi*punvar
       real(kind=8),PARAMETER                     :: one = 1.0d0
       real(kind=8),PARAMETER                     :: zero = 0.0d0
+      real(kind=8), DIMENSION(nnz)               :: weighted_values
+      type(SPARSE_MATRIX_T)                      ::Aderi_crs
+      type(SPARSE_MATRIX_T)                       :: Aderi_coo_t
+      
+      type(SPARSE_MATRIX_T)                      :: Aderi_w_crs
+      type(SPARSE_MATRIX_T)                        :: Aderi_coo
+      integer                                    :: status
 !=====================================================================
 ! Initialization of some arrays:
 ! VECTRA = sum of the H1 terms for each parameter type (dens., vel...)
@@ -136,6 +155,75 @@
            ! if(j.ne.i) bderi(j,i)=bderi(i,j)
         ! end do
       ! end do
+
+
+      !============================================================
+      !          handel COO
+      !          create crs
+      !=============================================================
+
+         ! Step 1: Prepare weighted COO values
+      !do i = 1, nnz
+       !  weighted_values(i) = sqrt(punvar(row_indices(i))) * values(i)
+      !end do
+      CALL DATE_AND_TIME(VALUES=time_coo)
+    
+      !===================================================================
+      ! Creation of hadel COO and covertion in CRS
+
+
+   ! Step 1: Prepare weighted COO values
+       do i = 1, nnz
+         weighted_values(i) =(punvar(rowAD(i))) * val_ad_s(i)
+      end do
+
+
+      status = mkl_sparse_d_create_coo(Aderi_coo_t, SPARSE_INDEX_BASE_ONE,&
+      ndat, npar, nnz, rowAD, columnAD, weighted_values)
+
+      print *, 'COO w', status
+
+      status = mkl_sparse_d_create_coo(Aderi_coo, SPARSE_INDEX_BASE_ONE,&
+      ndat, npar, nnz, rowAD, columnAD, val_ad_s)
+
+      print *, 'Coo ', status
+
+      status =0
+      !!! notice that in order to obtain a convertion, the finteger must be 8
+      status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_TRANSPOSE, Aderi_w_crs)
+
+      print *, 'CRS w', status
+
+      status =0
+      status = MKL_SPARSE_CONVERT_CSR(Aderi_coo,SPARSE_OPERATION_NON_TRANSPOSE, Aderi_crs)
+
+      print *, 'CRS ', status
+      status =0
+
+      status = mkl_sparse_destroy(Aderi_coo)
+      status = mkl_sparse_destroy(Aderi_coo_t)
+
+     
+      !=============================================================================
+
+      write(inout,*)'    Computing the partial derivative second part'
+      write(*,*)'    Computing the partial derivative second part'
+
+      !stat = mkl_sparse_spmm (operation, A, B, C)
+
+      status = mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, &
+                  Aderi_w_crs, Aderi_crs, AtCA) !&
+                  !SPARSE_LAYOUT_COLUMN_MAJOR,bderi, npar)
+
+      print *, 'result  mm', status
+      !CALL DGEMM ('N','N',npar,npar,ndat,one,matinter,npar,aderi,ndat,&
+                !  zero,bderi, npar)
+      CALL DATE_AND_TIME(VALUES=time_fin_coo)
+      CALL TIMECAL(time_coo,time_fin_coo)
+
+   
+
+      !====================================
       CALL DATE_AND_TIME(VALUES=time_miter1)
       write(inout,*)'    Computing the partial derivative first part'
       write(*,*)'    Computing the partial derivative first part'
@@ -325,5 +413,8 @@
 
       end if
 
+      
+      status = mkl_sparse_destroy(Aderi_w_crs)
+      status = mkl_sparse_destroy(Aderi_crs)
 
       END SUBROUTINE BLDMAT

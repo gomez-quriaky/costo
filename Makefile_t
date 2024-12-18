@@ -1,0 +1,91 @@
+FC = gfortran
+CC = gcc
+
+MKLROOT = /opt/intel/oneapi/mkl/latest
+
+current_dir = $(shell pwd)
+
+FFLAGS = -g 
+
+FFLAGS = -O2 
+CFLAGS = -O2 -Iinclude
+
+FINCLUDE = -I$(MKLROOT)/include/intel64/lp64  -Isblas -IINTERF -IDECLA
+
+FLIB =  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+
+MOD_DIR = sblas
+
+CINCLUDE = lib_C
+CSRC_FILES = lib_C/constants.c lib_C/geometry.c lib_C/grav_prism.c tesseroid.c
+
+
+F90SRC =\
+		read_layer.f90 \
+		read_modd.f90 \
+		read_modv.f90 \
+		readbco.f90 \
+		statcoord.f90 \
+		rdata.f90 \
+		info3d.f90 \
+		adnoise.f90 \
+		bldmap.f90 \
+		vel3.f90 \
+		ttmder.f90 \
+		simplex.f90 \
+		rayweb.f90 \
+		forw.f90 \
+		frechet.f90 \
+		caldt.f90 \
+		findnod.f90 \
+		zeroav.f90 \
+		dsmooth.f90 \
+		vsmooth.f90 \
+		ddiffer.f90 \
+		vdiffer.f90 \
+		bdiffer.f90 \
+		calgra.f90 \
+		contbod.f90 \
+		contnod.f90 \
+		bcalc.f90 \
+		denvel.f90 \
+		dgemm.f90 \
+		dgemv.f90 \
+		bldmat.f90 \
+		ludcmp.f90 \
+		lubksb.f90 \
+		invermat.f90 \
+		resol.f90 \
+		perturb.f90 \
+		output.f90 \
+		timecal.f90 \
+		grread.f90 \
+		ddiffergr.f90 \
+		calgradio.f90 \
+		joint_inv.f90 
+
+
+ 
+OBJ = $(F90SRC:.f90=.o) $(CSRC_FILES:.c=.o)
+
+# Executable name
+EXE = costo
+
+# Build rules
+all: $(EXE)
+
+$(EXE): $(OBJ)
+	$(FC) $(LFLAGS) -o $@ $^ $(FLIBS) 
+	
+%.o: %.f90
+	$(FC) $(FFLAGS) $(FINCLUDE) -J$(MOD_DIR) -c $< -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CINCLUDE) -c $< -o $@
+
+# Clean rule
+clean:
+	rm -f $(OBJ) $(EXE) $(MOD_DIR)/*.mod  mod_*.mod
+	rm *.o
+
+.PHONY: all clean

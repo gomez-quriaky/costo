@@ -453,6 +453,9 @@
       INCLUDE 'DECLA/MOD_delim.f'
       INCLUDE 'DECLA/MOD_vdata.f'
       INCLUDE 'DECLA/MOD_iloc.f'
+
+!=====================================================================
+     !INCLUDE 'sblas/mkl_spblas.f90'
 !=====================================================================
 !  INCLUDE OF MODULE FOR EXPLICIT INTERFACE (SUBROUTINES)
 !=====================================================================
@@ -478,7 +481,7 @@
       INCLUDE 'INTERF/MOD_dsmooth.f'
       INCLUDE 'INTERF/MOD_vsmooth.f'
       INCLUDE 'INTERF/MOD_bldmat.f90'
-      !INCLUDE 'INTERF/MOD_bldmat_modf.f90'
+      INCLUDE 'INTERF/MOD_bldmat_modf.f90'
       INCLUDE 'INTERF/MOD_invermat.f'
       INCLUDE 'INTERF/MOD_resol.f'
       INCLUDE 'INTERF/MOD_perturb.f'
@@ -487,11 +490,14 @@
 !=====================================================================
 !  BEGINNING OF MAIN PROGRAM
 !=====================================================================
-   PROGRAM joint_inv
+       
+      PROGRAM joint_inv
 
 !=====================================================================
 !  DECLARATION OF COMMUN MODULES and EXPLICIT INTERFACES
 !=====================================================================
+
+
       USE MOD_unit
       USE MOD_layer
       USE MOD_size
@@ -529,12 +535,17 @@
       USE MOD_output
       USE MOD_timecal
 
+
+      use ISO_Fortran_env
+      USE MKL_SPBLAS
+
 !=====================================================================
 !  VARIABLES DECLARATION
 !=====================================================================
       IMPLICIT NONE
 
-      INCLUDE 'mkl.fi'
+      !INCLUDE 'mkl.fi'
+
       logical                                 :: temp1
 	
       character(len=1)                           :: answer
@@ -600,8 +611,18 @@
    !  Aderi sparse variables
       
       real(kind=8), DIMENSION(:), ALLOCATABLE  :: val_ad_s
-      integer, DIMENSION(:), ALLOCATABLE  :: columnAD, rowAD
-      integer                                  ::  A_delta_dim, A_v_dim, A_GR_dim   
+      integer, DIMENSION(:), ALLOCATABLE       :: columnAD, rowAD
+      integer                                  :: nnz,idx_sp_A
+
+      type(sparse_matrix_t)                     :: AtCA
+      type(sparse_matrix_t)                     :: b_sp
+      integer                                   :: status_mkl
+
+      integer                                   :: memory_usage_bytes_Aderi
+      integer                                   :: memory_usage_bytes_A_s
+      integer                                   :: memory_usage_bytes_col_s
+      integer                                   :: memory_usage_bytes_row_s
+      
 
 !=====================================================================
 ! Calculation of the date and time of the beginning of the run
@@ -782,11 +803,11 @@
       ALLOCATE (amask(nfil))
       ALLOCATE (npts(nfil))
 
-	  if(INVGR) then
+	   if(INVGR) then
         ALLOCATE (rtvar(nfil+5))
       elseif(.not.INVGR) then
         ALLOCATE (rtvar(nfil))
-  	  endif
+  	   endif
 
       do i=1,nfil
          read(inpar,'(/a80)') dummy
@@ -801,9 +822,9 @@
          	else 
                 read(inpar,*) modvar(i),rtvar(i)
          	endif
-     	else
+     	   else
             read(inpar,*) modvar(i),rtvar(i)
-     	endif
+      	endif
          if(modvar(i).ne.0 .and. modvar(i).ne.1) then
             write(*,*)''
             write(*,*)'Allowed values for MODVAR is 0 or 1.'
@@ -1035,7 +1056,7 @@
       nbod=0
       nnod=0
 !=====================================================================
-! If inversion of data, need to know the model geometry (parameters 
+! If inversion of data, need to know the model geometry (parameters cald_sp(iend(2)))
 ! location).
 ! If direct problem, need to know the model geometry to pass through
 ! IBEGIN and IEND arrays are initialized here.
@@ -1128,17 +1149,39 @@
       write(inout,*)'B-COEFF DATA FROM ROW ',jbegin(4),' TO ',jend(4) 
       write(inout,*)'TOTAL NUMBER OF DATA:.....................',ndat   
 
+!=========================
+      write(*,*)' '
+      write(*,*)'CHECKING THE GOOD STORAGE OF DATA AND PARAMETERS'
+      write(*,*)' '
+      write(*,*)'DENSITIES   FROM COL.',ibegin(1),' TO ',iend(1)
+      write(*,*)'VELOCITIES  FROM COL.',ibegin(2),' TO ',iend(2)
+      write(*,*)'dV/dRHO, V0 FROM COL.',ibegin(3),' TO ',iend(3)
+      write(*,*)'NUMBER OF PARAMETERS PER BODY:............',npar1
+      write(*,*)'THEORIC NUMBER OF PARAMETERS TO INVERT:...',npar
+      write(*,*)'GRAVITY   DATA FROM ROW ',jbegin(1),' TO ',jend(1)
+      write(*,*)'DELAYTIME DATA FROM ROW ',jbegin(2),' TO ',jend(2)
+      write(*,*)'FTG DATA FROM ROW ',jbegin(3),' TO ',jend(3)     
+      write(*,*)'B-COEFF DATA FROM ROW ',jbegin(4),' TO ',jend(4) 
+      write(*,*)'TOTAL NUMBER OF DATA:.....................',ndat        
+
 !=====================================================================
 ! Allocate memory for the ADERI array(nbdata,nbparam) and initialization
 !=====================================================================
       !Aderi blocks dim
-      A_delta_dim = iend(1)*jend(1) 
-      A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2))
-      A_GR_dim = (iend(3)-ibegin(3))*(jend(3)-jbegin(3))
+      !A_rho_dim = iend(1)*jend(1) 
+      !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
+      !A_B_dim = (iend(3)-ibegin(3))*ndat
+      
+      nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) +&
+            (iend(1)*(jend(3)-jbegin(3)))
 
-      ALLOCATE (val_ad_s(A_delta_dim + A_v_dim + A_GR_dim))
-      ALLOCATE (columnAD(A_delta_dim + A_v_dim + A_GR_dim))
-      ALLOCATE (rowAD(A_delta_dim + A_v_dim + A_GR_dim))
+      write(*,*) 'value of nnz ', nnz, 'rho ', iend(1)*jend(1) ,&
+                  'v ',(iend(2)-ibegin(2))*(jend(2)-jbegin(2)) , &
+                  'gra ',  (iend(1)*(jend(3)-jbegin(3)))
+
+      ALLOCATE (val_ad_s(nnz))
+      ALLOCATE (columnAD(nnz))
+      ALLOCATE (rowAD(nnz))
 
       ALLOCATE (aderi(ndat,npar))
       ALLOCATE (bderi(npar,npar))
@@ -1154,6 +1197,40 @@
       aderi(:,:) = 0.d0
       bderi(:,:) = 0.d0
       diff(:) =0.d0
+
+      val_ad_s(:) = 0.d0
+      columnAD(:) = 0
+      rowAD(:)    = 0
+      idx_sp_A = iend(1)*jend(1) 
+
+      memory_usage_bytes_Aderi = npar*ndat/(1.d-9)! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+
+
+      memory_usage_bytes_A_s= size(val_ad_s) * storage_size(val_ad_s) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
+
+      write(*,*) 'nnz ', nnz ,  'size As', size(val_ad_s) ,'size col_a ', size(columnAD) , &
+               'storage_size col_s ' , storage_size(columnAD), 'COO = ', nnz*16/1.d-9
+         
+      write(inout,*)  'nnz ', nnz ,  'size As', size(val_ad_s) ,'size col_a ', size(columnAD) , &
+      'storage_size col_s ' , storage_size(columnAD)
+
+      memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI sparse' array col: ", memory_usage_bytes_col_s, " bytes"
+
+
+
+
+     ! memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) 
+     ! write (*,*) "Approx. memory usage for 'ADERI sparse' col array: ", memory_usage_bytes_col_s , " bits"
+
+
+      !memory_usage_bytes_row_s = size(rowAD) * storage_size(rowAD) 
+      !write (*,*) "Approx. memory usage for 'ADERI sparse' row array: ", memory_usage_bytes_row_s , " bits"
+  
 
       if(INVV) then
          ALLOCATE (velco(8*nxnode*nynode*nznode))
@@ -1188,7 +1265,8 @@
 ! and find the density blocks constrained (stored in file bloc.nod, FINDNOD)
 !=====================================================================
          !CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par)
-         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
+         CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,&
+               columnAD,rowAD, idx_sp_A,nnz,ndat,npar)
          if(INVD.or.INVGR) then
             CALL FINDNOD(xb,yb,zb,vxnodes,vynodes,vznodes,nbod,ibove)
 
@@ -1373,14 +1451,20 @@
          aderi(:,:) = 0.d0
          bderi(:,:) = 0.d0
 
+
+         val_ad_s(:) = 0.d0
+         columnAD(:) = 0
+         rowAD(:)    = 0
+         idx_sp_A = 0
+         
          if(INVD) then
             CALL CALGRA(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                        noised,signoisd,val_ad_s,columnAD,rowAD)
+                        noised,signoisd,val_ad_s,columnAD,rowAD, idx_sp_A)
          end if
 
          if(INVGR) then
             CALL CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
-                             noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD)
+                             noisegr,signoisgr,rtvar,ncomp,val_ad_s,columnAD,rowAD, idx_sp_A)
          end if
 
 !=====================================================================
@@ -1399,8 +1483,12 @@
 !           CALL RAYDENS()
 !        end if
 !=====================================================================
-            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,val_ad_s,columnAD,rowAD)
+            CALL CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
+                        val_ad_s,columnAD,rowAD, idx_sp_A,nnz,ndat,npar)
          end if
+
+
+
 !=====================================================================
 ! From here now, it only concerns inverse problem of data as the
 ! forward problems has stopped before in CALGRA and CALDT subroutines
@@ -1555,14 +1643,15 @@
          CALL BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                      npar1,ndat,smooth,iside,jside,ivside,jvside,&
                      xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                     ddvr,nbod)
+                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz,&
+                     AtCA,B_sp)
                      
          CALL DATE_AND_TIME(VALUES=time_blt2)
          CALL TIMECAL(time_blt1,time_blt2)
 !=====================================================================
 ! inversion of the matrix to obtain modelparameters estimation
 ! and calulation of the computing time
-!=====================================================================
+!=====================================================================/..
          CALL INVERMAT(bderi,npar,iiter,regul,lambda)
 
          CALL DATE_AND_TIME(VALUES=time_inv)
@@ -1602,6 +1691,28 @@
 
       CALL DATE_AND_TIME(VALUES=time_fin)
       CALL TIMECAL(time_ori,time_fin)
+
+      memory_usage_bytes_Aderi = size(ADERI) * storage_size(ADERI) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI': ", memory_usage_bytes_Aderi, " bytes"
+
+
+      memory_usage_bytes_A_s= size(val_ad_s) * storage_size(val_ad_s) / 8 ! Size in bytes
+      write (*,*) "Approx. memory usage for 'ADERI sparse' array val: ", memory_usage_bytes_A_s , " bytes"
+      write(inout,*) "Approx. memory usage for 'ADERI sparse'array val: ", memory_usage_bytes_A_s, " bytes"
+
+
+
+      write(*,*) 'nnz ', nnz ,  'size As', size(val_ad_s) ,'size col_a ', size(columnAD) , &
+               'storage_size col_s ' , storage_size(columnAD) 
+
+     !memory_usage_bytes_col_s = size(columnAD) * storage_size(columnAD) 
+     ! write (*,*) "Approx. memory usage for 'ADERI sparse' col array: ", memory_usage_bytes_col_s , " bits"
+      !write(inout,*) "Approx. memory usage for 'ADERI sparse' col array : ", memory_usage_bytes_col_s, " bits"
+
+      !memory_usage_bytes_row_s = size(rowAD) * storage_size(rowAD) 
+      !write (*,*) "Approx. memory usage for 'ADERI sparse' row array: ", memory_usage_bytes_row_s , " bits"
+      !write(inout,*) "Approx. memory usage for 'ADERI sparse' row array : ", memory_usage_bytes_row_s, " bits"
 
 
       write(*,*)''
@@ -1652,6 +1763,8 @@
       DEALLOCATE (val_ad_s)
       DEALLOCATE(columnAD)
       DEALLOCATE(rowAD)
+
+      !status_mkl = mkl_sparse_destroy(Aderi_crs)
 
       DEALLOCATE (ddtot)
       DEALLOCATE (vdtot)

@@ -16,12 +16,16 @@
 ! calls none
 !=====================================================================
 
+      INCLUDE 'INTERF/MOD_dgemv.f'
+
     SUBROUTINE CALDT(ibove,invnod,caldata,vels,ieq,aderi,par,&
-                     val_ad_s,columnAD,rowAD)
+                     val_ad_s,columnAD,rowAD,idx_sp_A,nnz,ndat,npar)
 
       USE MOD_unit
       USE MOD_delim
       USE MOD_layer
+
+      USE MOD_dgemv
       
       IMPLICIT NONE
 
@@ -37,17 +41,28 @@
       real(kind=8),DIMENSION(:,:),intent(inout)  :: aderi
       real(kind=8),DIMENSION(:,:,:,:),intent(in) :: vels
 
-      real(kind=8),DIMENSION(:),intent(inout) 		:: val_ad_s
+      real(kind=8),DIMENSION(:),intent(inout) 	 :: val_ad_s
 	   integer, DIMENSION(:),intent(inout)   :: columnAD
 	   integer, DIMENSION(:), intent(inout)  :: rowAD
+      integer, intent(inout)                 :: idx_sp_A
+      integer,intent(in)					 :: nnz
+	   integer,intent(in)					 :: ndat
+	   integer, intent(in)					:: npar
 
 !=====================================================================
 ! Declaration of the dummy arguments of CALDT
 !=====================================================================
       integer                               :: i,ii,j,jj,ier,ib,jb,m,nray
-      integer                               :: no_event,nnod,num
+      integer                               :: no_event,nnod,num 
       integer                               :: k,x,y,maxi
       integer,DIMENSION(:),ALLOCATABLE      :: count
+
+      !index for Sparse Aderi density
+      integer                                :: ind_sp_v
+      integer                                :: check
+      !tets if sparse matix*vec give the same (compare with caldata)
+      real(kind=8),DIMENSION(:),ALLOCATABLE   :: cald_sp, cald_blas
+      real(kind=8)                            :: one_a, zero_a
 
       real(kind=8)                          :: der_slow,vinit,vpert
       real(kind=8),DIMENSION(:),ALLOCATABLE :: mean
@@ -56,6 +71,10 @@
 !=====================================================================
       ibove(:) = 0
       caldata(jbegin(2):jend(2)) = 0.d0
+
+   !constant for sparse blas multiplication
+      one_a = 1.0d0
+      zero_a = 0.0d0
 
       write(*,*)''
       write(*,*)'FORWARD CALCULATION OF SYNTHETIC DELAY TIMES'
@@ -98,7 +117,7 @@
 !       - the partial derivative(der_slo)
 !=====================================================================
       do i=1,invnod
-         read(inmat,*,end=100) m,nray,nnod
+         read(inmat,*,end=100) m,nray,nnod 
 !=====================================================================
 ! Correspondance between node number and parameter number is stored 
 ! in ibove
@@ -136,9 +155,11 @@
             jj=jb+no_event
             vpert = vinit + par(ib)
             aderi(jj,ib) = -der_slow/(vpert*vpert)
-!           val_ad_s(jj) =  -der_slow/(vpert*vpert)
-            !rowAD(?) = 
-            caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib)
+            ind_sp_v = idx_sp_A + (m-1)*(jend(2)-jb) + no_event                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+            val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
+            rowAD(ind_sp_v) = jj
+            columnAD(ind_sp_v) = ib
+            caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib) !replace by sparse matrix*vector
          end do
       end do
 !=====================================================================
@@ -150,6 +171,42 @@
               inmat,'. Stooooop in CALDT!'
          STOP
       end if
+!==================================================
+
+! the following multiplication was equivalent for a vector equal to 0,
+      !check if caldata full give the same
+
+
+   !CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+   !                  nnz,par,zero_a,caldata)
+    !===========================================================  
+
+
+! test caldata and sparce matrix*vec
+    !  write(*,*) 'fin loop, begin mkl'
+     ! check =0
+
+
+      !allocate(cald_sp(ndat))
+      !cald_sp(:) = 0.0d0
+      !one_a = 1.0d0
+      !zero_a = 0.0d0
+      !call mkl_dcsrmv('N', m, n, alpha, 'G**F', val_a, row_a_s, , x, beta, y)
+      !CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+       !              nnz,par,zero_a,cald_sp)
+
+
+      !do j=jbegin(2),jend(2)
+      !   if (caldata(j).ne.cald_sp(j)) then
+      !      check = check +1
+      !      print *, 'no sparsze result', caldata(j), 'sparse ', cald_sp(j)
+      !      !EXIT
+      !   end if
+      !end do
+
+      !write(*,*)'total diff ', check , &
+       !       ' total ', jend(2) - jbegin(2)
+      
 
 !=====================================================================
 ! The average delay times for every event is zero, thus the
@@ -186,7 +243,8 @@
          caldata(i) = caldata(i) - mean(j)
       end do
 
-
+      ! uodate idx_sp_A
+      idx_sp_A = idx_sp_A + ind_sp_v
       DEALLOCATE(mean)
       DEALLOCATE(count)
 
