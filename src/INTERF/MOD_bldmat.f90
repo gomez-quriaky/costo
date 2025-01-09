@@ -9,8 +9,8 @@
         SUBROUTINE BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
             npar1,ndat,smooth,iside,jside,ivside,jvside,&
             xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-            ddvr,nbod,val_ad_s, rowAD, columnAD, nnz )!, &
-            !AtCA, B_sp)
+            ddvr,nbod,val_ad_s, rowAD, columnAD, nnz ,&
+            AtCA, B_sp)
 
             USE MOD_delim
 USE MOD_unit
@@ -34,9 +34,9 @@ use ISO_Fortran_env, only: i4=>int32, i8=>int64
 !=====================================================================
 integer,intent(in)                         :: iiter,npar,npar1,ndat
 integer,intent(in)                         :: ismooth
-integer(i8), intent(in)                    :: nbod
+integer, intent(in)                    :: nbod
 integer,DIMENSION(:),intent(in)            :: iside,ivside
-integer(i8), DIMENSION(:),intent(in)       :: ibove,ilay
+integer, DIMENSION(:),intent(in)           :: ibove,ilay
 integer,DIMENSION(:,:),intent(in)          :: jside,jvside
 
 real(kind=8),DIMENSION(:),intent(in)       :: diff,smooth,par,varpar
@@ -53,8 +53,8 @@ integer, DIMENSION(:), intent(in)          :: rowAD
 integer, DIMENSION(:), intent(in)          :: columnAD
 integer, intent(in)                        :: nnz
 
-!type(SPARSE_MATRIX_T), intent(out)         :: B_sp
-!type(SPARSE_MATRIX_T), intent(out)         :: AtCA 
+type(SPARSE_MATRIX_T), intent(out)         :: B_sp
+type(SPARSE_MATRIX_T), intent(out)         :: AtCA 
 !=====================================================================
 ! Declaration of the dummy arguments of BLDMAT
 !=====================================================================
@@ -79,8 +79,7 @@ type(SPARSE_MATRIX_T)                      :: Aderi_w_crs
 type(SPARSE_MATRIX_T)                        :: Aderi_coo
 integer                                    :: status
 
-type(SPARSE_MATRIX_T)                       :: B_sp
-type(SPARSE_MATRIX_T)                       :: AtCA 
+
 type(MATRIX_DESCR)                           :: descr
 
 
@@ -170,8 +169,10 @@ ndat, npar, nnz, rowAD, columnAD, val_ad_s)
 
 print *, 'Coo ', status
 
-status =0
+!status =0
 !!! notice that in order to obtain a convertion, the finteger must be 8
+!!!====================================================================
+!  Notice that ADER_w_crs = A*Cd**(-1) in sparse representation
 status = MKL_SPARSE_CONVERT_CSR(Aderi_coo_t,SPARSE_OPERATION_NON_TRANSPOSE, Aderi_w_crs)
 
 print *, 'CRS w', status
@@ -191,6 +192,10 @@ status = mkl_sparse_destroy(Aderi_coo_t)
 write(inout,*)'    Computing the partial derivative second part'
 write(*,*)'    Computing the partial derivative second part'
 
+
+! !=====================================================================
+! ! Calculation of At*Cd**(-1)*A.
+!=======================================================================
 !stat = mkl_sparse_spmm (operation, A, B, C)
 
 status = mkl_sparse_spmm(SPARSE_OPERATION_TRANSPOSE, &
@@ -201,7 +206,7 @@ print *, 'result  mm', status
 !stat = mkl_sparse_d_mv (operation, alpha, A, descr, x, beta, y)
 descr%type = SPARSE_MATRIX_TYPE_GENERAL
 
-status = mkl_sparse_d_mv (SPARSE_OPERATION_NON_TRANSPOSE, one, Aderi_w_crs, &
+status = mkl_sparse_d_mv (SPARSE_OPERATION_TRANSPOSE, one, Aderi_w_crs, &
             descr,diff, zero, h1)
 
 print *, 'result  mv', status
@@ -258,17 +263,17 @@ CALL TIMECAL(time_coo,time_fin_coo)
 
 ! CALL DATE_AND_TIME(VALUES=t_h11)
 ! CALL TIMECAL(time_multi,t_h11)
-! if(iiter.eq.1) then
-! do i=1,npar
-! j=1
-! do while(iend(j).lt.i)
-!    j=j+1
-! end do
-! vectra(j,2)=vectra(j,2)+h1(i)
-! end do
-! end if
-! write(inout,*)'    ....OK'
-! write(*,*)'    ....OK'
+if(iiter.eq.1) then
+do i=1,npar
+j=1
+   do while(iend(j).lt.i)
+        j=j+1
+   end do
+   vectra(j,2)=vectra(j,2)+h1(i)
+   end do
+end if
+write(inout,*)'    ....OK'
+write(*,*)'    ....OK'
 
 ! !=====================================================================
 ! ! Calculation of At*Cd**(-1)*A + Cp**(-1)

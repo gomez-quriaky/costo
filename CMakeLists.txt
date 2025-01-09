@@ -10,6 +10,9 @@ set(CMAKE_Fortran_STANDARD_REQUIRED TRUE)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
+#MKL ROOT DIR
+set(MKLROOT "/opt/intel/oneapi/mkl/2025.0")
+
 # Define the source directories
 set(MODULE_I_DIR "${CMAKE_SOURCE_DIR}/src/INTERF")
 set(MODULE_DECLA_DIR "${CMAKE_SOURCE_DIR}/src/DECLA")
@@ -39,16 +42,29 @@ set_target_properties(costo PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_
 # Compiler options
 target_compile_options(costo PRIVATE -O0)
 
+# Specify MKL libraries manually
+set(MKL_LIBRARIES
+    ${MKLROOT}/lib/intel64/libmkl_intel_lp64.so
+    ${MKLROOT}/lib/intel64/libmkl_core.so
+    ${MKLROOT}/lib/intel64/libmkl_sequential.so
+    -lpthread
+    -lm
+    -ldl
+)
+
+# Link MKL manually
+target_link_libraries(costo PRIVATE ${MKL_LIBRARIES})
+
 # Link Intel MKL
 # Adjust the MKLROOT path if it is not set in your environment variables
 # Looking for the boost package
-message("======== Looking for the MKL library =======")
-find_package(MKL REQUIRED)
-if(MKL_FOUND)
-    target_link_libraries(costo PRIVATE MKL::MKL)
-else()
-    message(FATAL_ERROR "Intel MKL not found. Please ensure MKL is installed and MKLROOT is set.")
-endif()
+# message("======== Looking for the MKL library =======")
+# find_package(MKL COMPONENTS REQUIRED)
+# if(MKL_FOUND)
+#     target_link_libraries(costo PRIVATE MKL::MKL)
+# else()
+#     message(FATAL_ERROR "Intel MKL not found. Please ensure MKL is installed and MKLROOT is set.")
+# endif()
 
 # Include source directories for better code organization
 #set(MY_MOD ${MODULE_MKL_DIR} ${PROCEDURE_SOURCES} ${MODULE_I_SOURCES} ${MODULE_DECLA_SOURCES} ${C_SOURCES} )

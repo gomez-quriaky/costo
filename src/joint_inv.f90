@@ -1643,8 +1643,8 @@
          CALL BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                      npar1,ndat,smooth,iside,jside,ivside,jvside,&
                      xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz)!,&
-                    ! AtCA,B_sp)
+                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz, &
+                     AtCA,B_sp)
                      
          CALL DATE_AND_TIME(VALUES=time_blt2)
          CALL TIMECAL(time_blt1,time_blt2)
