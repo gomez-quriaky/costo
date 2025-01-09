@@ -4,3 +4,6 @@ fichier_input/
 *.mod
 *.o
 costo
+build/
+src/DECLA/*.mod
+src/INTERF/*.mod
