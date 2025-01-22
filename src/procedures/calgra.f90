@@ -130,12 +130,14 @@
                if(INV) then
                   idx_sp_A = (idp-1)*nbod + ipar
                   if(rhoinit.ne.0.d0) then
-                     aderi(idp,ipar) = g/rhoinit
+                     !aderi(idp,ipar) = g/rhoinit
+                     ! sparse Aderi density block 
                      val_ad_s(idx_sp_A) = g/rhoinit
                      columnAD(idx_sp_A) = ipar
                      rowAD(idx_sp_A)   = idp
                   else
-                     aderi(idp,ipar) = sum*gamma*si2mg*km2m*1.d3
+                     !aderi(idp,ipar) = sum*gamma*si2mg*km2m*1.d3
+                     !sparse Aderi density block 
                      val_ad_s(idx_sp_A) = sum*gamma*si2mg*km2m*1.d3
                      columnAD(idx_sp_A) = ipar
                      rowAD(idx_sp_A)   = idp

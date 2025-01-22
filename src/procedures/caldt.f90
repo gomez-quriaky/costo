@@ -152,9 +152,9 @@
             read(inmat,*) no_event,der_slow
             jj=jb+no_event
             vpert = vinit + par(ib)
-            aderi(jj,ib) = -der_slow/(vpert*vpert)
+            !aderi(jj,ib) = -der_slow/(vpert*vpert)
             !======
-            ! sparce Aderi v block
+            ! sparse Aderi v block
             ind_sp_v = idx_sp_A + (m-1)*(jend(2)-jb) + no_event                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
             val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
             rowAD(ind_sp_v) = jj
@@ -216,7 +216,7 @@
          caldata(i) = caldata(i) - mean(j)
       end do
 
-      ! uodate idx_sp_A
+      ! update idx_sp_A
       idx_sp_A = idx_sp_A + ind_sp_v
       DEALLOCATE(mean)
       DEALLOCATE(count)

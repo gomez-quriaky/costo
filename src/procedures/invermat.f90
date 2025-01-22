@@ -26,9 +26,11 @@
       USE MOD_unit
 
       USE MOD_dsinv
+
       !USE MOD_ludcmp
       !USE MOD_lubksb
-
+      USE LAPACK95
+      USE F95_PRECISION
       IMPLICIT NONE
 
 !=====================================================================
@@ -36,7 +38,7 @@
 !=====================================================================
       integer,intent(in)                          :: npar,iiter,regul
 
-      real(kind=8),intent(in)			  :: lambda
+      real(kind=8),intent(in)			               :: lambda
       real(kind=8),DIMENSION(:,:),intent(inout)   :: bderi
 !=====================================================================
 ! Declaration of the dummy arguments of INVERMAT
@@ -48,12 +50,15 @@
 !      real(kind=8),DIMENSION(npar,npar)        :: matemp,dcmp
       real(kind=8),DIMENSION(:,:),ALLOCATABLE  :: dcmp
       real(kind=8),DIMENSION(npar)             :: vv
+      
+      integer                                   :: status
 !=====================================================================
 ! Initialization of some variables
 ! DCMP-matrix is first the identity matrix
 !=====================================================================
       ier=0
       toler=1.0d-7
+      status = 0
 !      matemp(:,:) = bderi(:,:)
 
       write(*,*)''
@@ -70,20 +75,26 @@
 ! to be inversed
 !=====================================================================
       if(regul.eq.1.and.iiter.eq.1) then
-	do i=1,npar
- 	  bderi(i,i)=bderi(i,i)*lambda
-        end do
+	      do i=1,npar
+ 	         bderi(i,i)=bderi(i,i)*lambda
+         end do
       end if
 !=====================================================================
 ! Try a simple invertion of bderi matrix.
 ! If failure, proceed to the LU decomposition, bderi unchanged
 !=====================================================================
-      CALL DSINV(bderi,npar,toler,ier)
+      !CALL DSINV(bderi,npar,toler,ier)
+      !call dpotrf( uplo, n, a, lda, info )
+      
+      CALL dpotrf('L', npar, bderi, npar , status)
+
+      print *, 'result factorizaton Cholesky ', status
 !=====================================================================
 ! If no problem encountered during DSINV, add the symmetrical part of 
 ! the matrix
 !=====================================================================
-      if(ier.eq.0) then
+      !if(ier.eq.0) then
+      if(status.eq.0) then
 
          do i=2,npar
             jj=i-1
@@ -164,7 +175,7 @@
 !=====================================================================
     !INCLUDE 'INTERF/MOD_dmfsd.f'
 
-    SUBROUTINE DSINV(bderi,npar,toler,ier)
+   SUBROUTINE DSINV(bderi,npar,toler,ier)
 
       USE MOD_unit
 

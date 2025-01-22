@@ -1,5 +1,5 @@
 ! MP
-!> \mainpage
+!> \mainpage Costo
 !! The algorithm is based on the `joint_inv` algo from C. Tiberi. We will briefly detail how to use the code here and the main informations. 
 !!
 !! See Tiberi et al. (2003, 2018) for more details about the joint inversion between tomography and gravity, 
@@ -1170,7 +1170,7 @@
       !Aderi blocks dim
       !A_rho_dim = iend(1)*jend(1) 
       !A_v_dim = (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) ->some elements migth be Zero
-      !A_B_dim = (iend(3)-ibegin(3))*ndat
+      !A_gradio_dim = (iend(3)-ibegin(3))*iend(1)
       
       nnz = iend(1)*jend(1) + (iend(2)-ibegin(2))*(jend(2)-jbegin(2)) +&
             (iend(1)*(jend(3)-jbegin(3)))
@@ -1501,7 +1501,7 @@
             write(inout,*)''
             write(inout,*)'DETERMINATION OF CONTIGUOUS BODY, &
                  &ISMOOTH = 1, FIRST ITERATION'
-
+            
             if(INVD.or.INVGR) CALL CONTBOD(xb,yb,nbod,ilay,iside,jside)
             if(INVV) CALL CONTNOD(ibove,ivside,jvside)
          end if
@@ -1640,7 +1640,7 @@
 !=====================================================================
          CALL DATE_AND_TIME(VALUES=time_blt1)
 
-         CALL BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
+         CALL BLDMAT(iiter,bderi,punvar,varpar,h1,diff,npar,&
                      npar1,ndat,smooth,iside,jside,ivside,jvside,&
                      xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
                      ddvr,nbod,val_ad_s, rowAD, columnAD, nnz, &
@@ -1654,10 +1654,10 @@
 !=====================================================================/..
          
          !!!! Test for compilation! skip call invermat
-         !CALL INVERMAT(bderi,npar,iiter,regul,lambda)
+         CALL INVERMAT(bderi,npar,iiter,regul,lambda)
 
-         !CALL DATE_AND_TIME(VALUES=time_inv)
-         !CALL TIMECAL(time_blt2,time_inv)
+         CALL DATE_AND_TIME(VALUES=time_inv)
+         CALL TIMECAL(time_blt2,time_inv)
 !=====================================================================
 ! Calcul of the new parameters in PAR and VARPAR array
 ! Calcul of the standard deviation

@@ -130,7 +130,7 @@
                end if
                if(newf.lt.factor) then
                   factor=newf
-		  pertu(j)=pertu(j)*factor
+		            pertu(j)=pertu(j)*factor
                   jfail=j
                end if
             end if
@@ -161,7 +161,7 @@
 !=====================================================================
       do i=1,npar
          par0(i)=par(i)
-	 par(i)=par(i)+pertu(i)
+	      par(i)=par(i)+pertu(i)
 !         par(i)=par(i)+pertu(i)*factor
       end do
 !=====================================================================
