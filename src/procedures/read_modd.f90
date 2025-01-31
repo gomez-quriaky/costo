@@ -1,0 +1,217 @@
+!=====================================================================
+!=====================================================================
+!
+!			SUBROUTINE READ_MODD
+!
+!=====================================================================
+!=====================================================================
+!> input of density model information
+!! reads in files densmod
+!!		  
+!! puts the relative density values and their variance in the
+!! array  __PAR__ and __VARPAR__
+!! \param PAR is the relative density
+!! \param VARPAR is the covariance
+!
+! A faire: donner une densite de reference dans dens.mod pour pouvoir
+! avoir dans par une variation de densite. Ca devrait aller mieux au
+! niveau de l'inversion gravi deja...
+!
+!=====================================================================
+!
+! Calls none
+! Called by MAIN
+!=====================================================================
+
+    SUBROUTINE READ_MODD(zroref,roexp,ilay,xb,yb,zb,par,varpar,npar,nbod,&
+                           x_block,y_block,ddep,dxcor,dycor)
+
+      USE MOD_unit
+      USE MOD_layer
+      USE MOD_size
+      USE MOD_inv
+      USE MOD_delim
+
+      IMPLICIT NONE
+
+!=====================================================================
+! Declaration of in/out/inout arguments of READ_MODD
+!=====================================================================
+      integer,intent(in)                         :: roexp
+      integer,intent(inout)                      :: npar
+      integer,intent(out)                        :: nbod
+      integer,DIMENSION(:),intent(inout)         :: x_block,y_block
+      integer,DIMENSION(:),intent(inout)         :: ilay
+      
+      real (kind=8),DIMENSION(:),intent(inout)   :: ddep
+      real (kind=8),DIMENSION(:,:),intent(inout) :: dxcor
+      real (kind=8),DIMENSION(:,:),intent(inout) :: dycor
+
+      real(kind=8),intent(in)                  :: zroref
+      
+      real(kind=8),DIMENSION(:,:),intent(inout):: xb,yb,zb
+      real(kind=8),DIMENSION(:),intent(inout)  :: par,varpar
+!=====================================================================
+! Declaration of dummy arguments of READ_MODD
+!=====================================================================
+      integer                                      :: i,j,k,ier,ibloc
+      integer                                      :: temp1,temp2
+
+      character(len=80)                            :: dummy
+      character(len=15)                            :: forma
+
+      real(kind=8)                                 :: zr,dro,fac
+      real(kind=8),DIMENSION(nlayer)               :: d0
+      real(kind=8),DIMENSION(nxbloc,nybloc,nlayer) :: density
+      real(kind=8),DIMENSION(nxbloc,nybloc,nlayer) :: dvari
+!=====================================================================
+! initialization of the block delimiters and some arrays
+! ibegin(1), iend(1)= density
+!=====================================================================
+      nbod = 0
+      density(:,:,:) = 0.d0
+      dvari(:,:,:) = 0.d0
+      xb(:,:) = 0.d0
+      yb(:,:) = 0.d0
+      zb(:,:) = 0.d0
+      dxcor(:,:) = 0.d0
+      dycor(:,:) = 0.d0
+      zr=0.5/zroref
+
+      write(*,*)''
+      write(*,*)'READING THE DENSITY MODEL FILE'
+      write(inout,*)''
+      write(inout,*)'READING THE DENSITY MODEL FILE'
+!=====================================================================
+! Reading the density,covariance and body coordinates in dens.mod file
+!=====================================================================
+      open(indens,file=densmod,status='OLD',iostat=ier)
+
+      if(ier.ne.0) then
+         write(*,*) 'Error in opening DENS.MOD file'
+         write(*,*) 'Stooooop in READ_MODD!'
+         STOP
+      end if
+           
+      read(indens,'(a80)') dummy
+      read(indens,*) temp1,temp2
+      read(indens,'(a80)') dummy
+      read(indens,*)(ddep(i),i=1,nlayer+1) 
+      read(indens,'(a80)') dummy
+      read(indens,*)(d0(i),i=1,nlayer)
+
+print*,ddep
+print*,d0
+      do k=1,nlayer
+         read(indens,*) dummy,x_block(k),y_block(k)
+         if(x_block(k).gt.temp1 .or. y_block(k).gt.temp2) then
+            write(*,*)''
+            write(*,*)'Number of blocks of layer ',k,' exceeds &
+                 &maximum allowed in first line of file ',densmod,'.'
+            write(*,*) 'Inconsistency in ',densmod,'file. Stooooop &
+                 &in READ_MODD!'
+            STOP
+         end if
+!=====================================================================
+! Calculate the number of bodies to be inverted and their coordinates
+!=====================================================================
+         nbod=nbod+(x_block(k)*y_block(k))
+
+         read(indens,*) (dxcor(i,k),i=1,x_block(k)+1)
+         read(indens,*) (dycor(i,k),i=1,y_block(k)+1)
+         do j=y_block(k),1,-1
+            read(indens,*) (density(i,j,k),i=1,x_block(k))
+         end do
+         do j=y_block(k),1,-1
+            read(indens,*) (dvari(i,j,k),i=1,x_block(k))
+         end do
+      end do
+           
+      write(inout,*)'    Exact number of density blocks to invert: ',nbod
+      write(inout,*)'       In x-direction ',temp1,' blocks (max.) from ',&
+           MINVAL(dxcor),'km to ',MAXVAL(dxcor),'km'
+      write(inout,*)'       In y-direction ',temp2,' blocks (max.) from ',&
+           MINVAL(dycor),'km to ',MAXVAL(dycor),'km'
+      write(inout,*)'       In z-direction ',nlayer,' layers from ',&
+           MINVAL(ddep),'km to ',MAXVAL(ddep),'km'
+
+!=====================================================================
+! Density and covariance are stored into the arrays PAR and VARPAR,
+! returns the number of bodies and the delimiters of the array storage
+!=====================================================================
+      ibegin(1)=1
+      iend(1)=nbod
+      write(*,*)'    Density model stored in arrays from i=',&
+           ibegin(1),' to i=',iend(1)
+      write(inout,*)'    Density model stored in arrays from i=',&
+           ibegin(1),' to i=',iend(1)
+!=====================================================================
+! store the block corners coordinates in xb,yb,zb arrays
+!=====================================================================
+      ibloc=0
+      do k=1,nlayer
+         do j=1,y_block(k)
+            do i=1,x_block(k)
+               npar=npar+1
+               ibloc=ibloc+1
+               xb(ibloc,1) = dxcor(i,k)
+               xb(ibloc,2) = dxcor(i+1,k)
+               yb(ibloc,1) = dycor(j,k)
+               yb(ibloc,2) = dycor(j+1,k)
+               zb(ibloc,1) = ddep(k)
+               zb(ibloc,2) = ddep(k+1)
+               ilay(ibloc) = k
+!=====================================================================
+! Check if the block coordinates are coherents
+!=====================================================================
+               if(xb(ibloc,1).ge.xb(ibloc,2)) then
+                  write(*,*)''
+                  write(*,*)'Inconsistency in x-block coordinates in &
+                       &layer: ', k
+                  write(*,'(''    xb1= '',f7.2,'' > xb2= '',f7.2)') &
+                       xb(ibloc,1),xb(ibloc,2)
+                  STOP 'in READ_MODD'
+               end if
+               if(yb(ibloc,1).ge.yb(ibloc,2)) then
+                  write(*,*)''
+                  write(*,*)'Inconsistency in y-block coordinates in &
+                       &layer: ',k
+                  write(*,'(''    yb1= '',f7.2,'' > yb2= '',f7.2)') &
+                       yb(ibloc,1),yb(ibloc,2)
+                  STOP 'in READ_MODD'
+               end if
+               if(zb(ibloc,1).ge.zb(ibloc,2)) then
+                  write(*,*)''
+                  write(*,*)'Inconsistency in z-block coordinates in &
+                       &layer ',k
+                  write(*,'(''    zb1= '',f7.2,'' > zb2= '',f7.2)') &
+                       zb(ibloc,1),zb(ibloc,2)
+                  STOP 'in READ_MODD'
+               end if
+!=====================================================================
+! store the relative density and the covariance in the PAR and VARPAR 
+! arrays, npar=0 at the beginning of the subroutine
+!=====================================================================
+               par(npar) = density(i,j,k) - d0(k)
+               dro = dvari(i,j,k)
+               fac = (ddep(k)+ddep(k+1))*zr
+               if(roexp.ne.0.D0) then
+                  dro = dro*dabs(fac)**roexp
+               end if
+               dro = 1./(dro*dro)
+               varpar(npar) = dro
+            end do
+         end do
+      end do
+!=====================================================================
+! Closing the dens.mod file
+!=====================================================================
+      close(indens,iostat=ier)
+      if(ier.ne.0) then
+         write(*,*)'Error in closing the file ',densmod,' logical &
+                   &unit ',indens,'. Stooooop in READ_MODD!'
+         STOP
+      end if
+
+
+    END SUBROUTINE READ_MODD

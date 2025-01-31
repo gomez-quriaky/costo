@@ -1,0 +1,17 @@
+Petit readme pour COSTO.
+
+TOUTE la documentation associée a été réalisé avec Doxygen. Pour l'ouvrir, il faut aller dans le dossier html et ensuite 
+ouvrir le fichier index.html
+
+Il y a probablement moyen de faire un accès plus simple et propre, on verra plus tard. 
+
+Pour mettre à la jour la doc, il faut installer doxygen et doxywizard (c'est une interface pour doxygen),
+ouvrir doxywizard et charger le fichier "Doxyfile_costo". Et ensuite dans l'onglet "Run", 
+faire "Run doxygen" et ensuite "show HTML output". Dites moi si ça ne marche pas chez vous. 
+
+Si vous voulez ajouter des choses dans la doc c'est assez simple, à chaque début de code fortran il y a 
+une partie qui commence par "!>", et ensuite vous avez juste a commencer votre ligne par "!!" et ça rajoutera cela dans la doc.
+Et ensuite il faut recompiler tout ça et c'est magique.
+
+Si jamais la doc est aussi sortie au format latex et pdf dans le dossier "latex", faire "Make all" et ouvrir le fichier "refman.pdf".
+

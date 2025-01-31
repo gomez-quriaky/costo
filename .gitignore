@@ -1,0 +1,6 @@
+latex/
+html/
+fichier_input/
+build/
+src/DECLA/*.mod
+src/INTERF/*.mod
