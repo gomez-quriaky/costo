@@ -8,8 +8,13 @@
             "name": "(gdb) Attach",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/costo",
+            "program": "/home/quriaky/costo_modif_q/costo-master/build/costo",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "/home/quriaky/costo_modif_q/costo_master/fichier_input",
+            "environment": [],
             "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb", 
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -26,3 +31,4 @@
     
     ]
 }
+

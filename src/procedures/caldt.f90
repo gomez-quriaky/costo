@@ -152,14 +152,14 @@
             read(inmat,*) no_event,der_slow
             jj=jb+no_event
             vpert = vinit + par(ib)
-            !aderi(jj,ib) = -der_slow/(vpert*vpert)
+            aderi(jj,ib) = -der_slow/(vpert*vpert)
             !======
             ! sparse Aderi v block
             ind_sp_v = idx_sp_A + (m-1)*(jend(2)-jb) + no_event                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
             val_ad_s(ind_sp_v) =  -der_slow/(vpert*vpert)
             rowAD(ind_sp_v) = jj
             columnAD(ind_sp_v) = ib
-            !caldata(jj) = caldata(jj) + aderi(jj,ib)*par(ib) !replace by sparse matrix*vector
+            caldata(jj) = caldata(jj) + val_ad_s(ind_sp_v)*par(ib)!aderi(jj,ib)*par(ib) !replace by sparse matrix*vector
          end do
       end do
 !=====================================================================
@@ -177,8 +177,8 @@
       one_a = 1.0d0
       zero_a = 0.0d0
       !call mkl_dcsrmv('N', m, n, alpha, 'G**F', val_a, row_a_s, , x, beta, y)
-      CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
-                     nnz,par,zero_a,caldata)
+      !CALL mkl_dcoomv('N',ndat, npar,one_a,'G**F',val_ad_s,rowAD,columnAD,&
+       !              nnz,par,zero_a,caldata)
 
 
 !=====================================================================

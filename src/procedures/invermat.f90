@@ -47,19 +47,23 @@
       integer,DIMENSION(npar)                  :: indx
 
       real(kind=8)                             :: toler,d
-!      real(kind=8),DIMENSION(npar,npar)        :: matemp,dcmp
+      !real(kind=8),DIMENSION(npar,npar)        :: matemp,dcmp
       real(kind=8),DIMENSION(:,:),ALLOCATABLE  :: dcmp
       real(kind=8),DIMENSION(npar)             :: vv
       
       integer                                   :: status
+      integer,dimension(:) , allocatable   :: ipiv
 !=====================================================================
 ! Initialization of some variables
 ! DCMP-matrix is first the identity matrix
 !=====================================================================
+      !allocate(ipiv(npar))
+      
       ier=0
       toler=1.0d-7
       status = 0
-!      matemp(:,:) = bderi(:,:)
+      !ipiv(:) = 0
+      !matemp(:,:) = bderi(:,:)
 
       write(*,*)''
       write(*,*)'INVERTING THE MATRIX'
@@ -83,18 +87,25 @@
 ! Try a simple invertion of bderi matrix.
 ! If failure, proceed to the LU decomposition, bderi unchanged
 !=====================================================================
-      !CALL DSINV(bderi,npar,toler,ier)
+      CALL DSINV(bderi,npar,toler,ier)
       !call dpotrf( uplo, n, a, lda, info )
-      
-      CALL dpotrf('L', npar, bderi, npar , status)
 
-      print *, 'result factorizaton Cholesky ', status
+      !Cholesky factorization
+      
+     ! CALL dpotrf('U', npar, bderi, npar , status)
+      !print *, 'result factorizaton Cholesky ', status
 !=====================================================================
-! If no problem encountered during DSINV, add the symmetrical part of 
+! If no problem encountered during Chbolesky, add the symmetrical part of 
 ! the matrix
 !=====================================================================
-      !if(ier.eq.0) then
-      if(status.eq.0) then
+      if(ier.eq.0) then
+      !if(status.eq.0) then
+      ! Cholesky inversion
+      !call dpotri( uplo, n, a, lda, info )
+        ! call dpotri('U', npar, bderi,npar, status )
+
+         !call potri(bderi,'L', status )
+         print *, 'result inverstion Cholesky ', ier
 
          do i=2,npar
             jj=i-1
@@ -111,43 +122,47 @@
 ! Bderi matrix has been unchanged by the DSINV subroutine...
 !=====================================================================
          write(*,*)''
-         write(*,*)'    Problem in inverting matrix, in INVERMAT ier= ',ier
+         write(*,*)'    Problem in inverting matrix, in INVERMAT ier= ',status !ier
          write(*,*)'    Have to proceed to LU decomposition..........'
 
          write(inout,*)''
-         write(inout,*)'    Problem in inverting matrix, in INVERMAT ier= ',ier
+         write(inout,*)'    Problem in inverting matrix, in INVERMAT ier= ',status!ier
          write(inout,*)'    Have to proceed to LU decomposition..........'
 
-         ALLOCATE(dcmp(npar,npar))
+         ! LU factorization with pivoting
+         !call getrf( a [,ipiv] [,info] )
+         !call getrf( bderi,ipiv ,status )
+
+         !print *, "LU factorization", status
          
-!         CALL LUDCMP(matemp,indx,d)
+         !call getri(bderia, ipiv [,info] )
+        ! call getri( bderi, ipiv, status)
+         !print *, "LU invertion", status
 
-         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         !ADAPT to MKL SPARSE BLAS
-! 	 CALL LUDCMP(bderi,indx,d)
-!          write(*,*)''
-!          write(*,*)'    LU decomposition done.'
+         ALLOCATE(dcmp(npar,npar))
 
-!          dcmp(:,:)=0.d0
-!          do i=1,npar
-!             dcmp(i,i)=1.
-!          end do
+         CALL LUDCMP(bderi,indx,d)
+     write(*,*)''
+     write(*,*)'    LU decomposition done.'
+     dcmp(:,:)=0.d0
+     do i=1,npar
+        dcmp(i,i)=1.
+     end do
+     do j=1,npar
+        do i=1,npar
+           vv(i)=dcmp(i,j)
+        end do
+         !CALL LUBKSB(matemp,indx,vv)
+   CALL LUBKSB(bderi,indx,vv)
+        do i=1,npar
+           dcmp(i,j)=vv(i)
+        end do
+     end do
+     write(*,*)''
+     write(*,*)'    LU Back Substitution done.'
+     bderi(:,:)=dcmp(:,:)
 
-!          do j=1,npar
-!             do i=1,npar
-!                vv(i)=dcmp(i,j)
-!             end do
-! !            CALL LUBKSB(matemp,indx,vv)
-! 	    CALL LUBKSB(bderi,indx,vv)
-!             do i=1,npar
-!                dcmp(i,j)=vv(i)
-!             end do
-!          end do
-!          write(*,*)''
-!          write(*,*)'    LU Back Substitution done.'
-
-!          bderi(:,:)=dcmp(:,:)
-	 DEALLOCATE(dcmp)
+       !  deallocate(ipiv)
 
       end if
 

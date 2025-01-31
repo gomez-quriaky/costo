@@ -615,7 +615,7 @@
       integer                                  :: nnz,idx_sp_A
 
       type(sparse_matrix_t)                     :: AtCA
-      type(sparse_matrix_t)                     :: b_sp
+      !type(sparse_matrix_t)                     :: b_sp
       integer                                   :: status_mkl
 
       integer                                   :: memory_usage_bytes_Aderi
@@ -1545,7 +1545,10 @@
                          velco,v0,nbod,bdtot,ibove)
          end if
 
+         print *, "fin diff"
          dtot = ddtot(iiter,4) + vdtot(iiter,4) + bdtot(iiter,3) + grdtot(iiter)
+
+         
 
          ! enregistrement modèle densité
          if(INVD.or.INVGR) then
@@ -1638,13 +1641,13 @@
 ! to invert
 ! and calulation of the computing time
 !=====================================================================
+      
          CALL DATE_AND_TIME(VALUES=time_blt1)
-
-         CALL BLDMAT(iiter,bderi,punvar,varpar,h1,diff,npar,&
+      
+         CALL BLDMAT(iiter,aderi,bderi,punvar,varpar,h1,diff,npar,&
                      npar1,ndat,smooth,iside,jside,ivside,jvside,&
                      xb,yb,vxnodes,vynodes,par,ibove,ismooth,ilay,&
-                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz, &
-                     AtCA,B_sp)
+                     ddvr,nbod,val_ad_s, rowAD, columnAD, nnz)
                      
          CALL DATE_AND_TIME(VALUES=time_blt2)
          CALL TIMECAL(time_blt1,time_blt2)
@@ -1662,21 +1665,20 @@
 ! Calcul of the new parameters in PAR and VARPAR array
 ! Calcul of the standard deviation
 !=====================================================================
-         !CALL PERTURB(bderi,h1,npar,drmax,ilay,par,par0,vels,iiter,&
-          !            ibove,xb,yb,zb)
-
+         CALL PERTURB(bderi,h1,npar,drmax,ilay,par,par0,vels,iiter,&
+                      ibove,xb,yb,zb)
 !=====================================================================
 ! calcul of the resolution... It seems correct
 !=====================================================================
-         ! if (iiter.gt.1) then
-         !    write(*,*)''
-         !    write(*,*)'RESOLUTION CALCULATION'
+         if (iiter.gt.1) then
+             write(*,*)''
+             write(*,*)'RESOLUTION CALCULATION'
 
-         !    write(inout,*)''
-         !    write(inout,*)'RESOLUTION CALCULATION'
+             write(inout,*)''
+             write(inout,*)'RESOLUTION CALCULATION'
 
-         !    CALL RESOL(bderi,aderi,npar,ndat,xb,yb,ilay,vxnodes,vynodes,ibove,punvar)
-         ! end if
+             CALL RESOL(bderi,aderi,npar,ndat,xb,yb,ilay,vxnodes,vynodes,ibove,punvar)
+         end if
         
 !=====================================================================
 ! End of loops over the iterations

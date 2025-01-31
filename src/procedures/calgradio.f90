@@ -180,7 +180,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                      val_ad_s = resxx/rhoinit
                      rowAD = idp+nptsgr*(iter-1)
                      columnAD = ipar
-                     !aderi(idp+nptsgr*(iter-1),ipar)=resxx/rhoinit
+                     aderi(idp+nptsgr*(iter-1),ipar)=resxx/rhoinit
                      
                   endif
                   if (rtvar(nbn+2) .ne. 0) then
@@ -190,7 +190,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                      val_ad_s = resxx/rhoinit
                      rowAD = idp+nptsgr*(iter-1)
                      columnAD = ipar
-                     !aderi(idp+nptsgr*(iter-1),ipar)=resxy/rhoinit
+                     aderi(idp+nptsgr*(iter-1),ipar)=resxy/rhoinit
                   endif
                   if (rtvar(nbn+3) .ne. 0) then
                      iter=iter+1
@@ -199,7 +199,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                      val_ad_s = resxx/rhoinit
                      rowAD = idp+nptsgr*(iter-1)
                      columnAD = ipar
-                     !aderi(idp+nptsgr*(iter-1),ipar)=resxz/rhoinit
+                     aderi(idp+nptsgr*(iter-1),ipar)=resxz/rhoinit
                   endif
                   if (rtvar(nbn+4) .ne. 0) then
                      iter=iter+1
@@ -208,7 +208,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                      val_ad_s = resxx/rhoinit
                      rowAD = idp+nptsgr*(iter-1)
                      columnAD = ipar
-                     !aderi(idp+nptsgr*(iter-1),ipar)=resyy/rhoinit
+                     aderi(idp+nptsgr*(iter-1),ipar)=resyy/rhoinit
                   endif
                   if (rtvar(nbn+5) .ne. 0) then
                      iter=iter+1
@@ -217,7 +217,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                      val_ad_s = resxx/rhoinit
                      rowAD = idp+nptsgr*(iter-1)
                      columnAD = ipar
-                     !aderi(idp+nptsgr*(iter-1),ipar)=resyz/rhoinit
+                     aderi(idp+nptsgr*(iter-1),ipar)=resyz/rhoinit
                   endif
                   if (rtvar(nbn+6) .ne. 0) then
                      iter=iter+1
@@ -226,7 +226,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                      val_ad_s = resxx/rhoinit
                      rowAD = idp+nptsgr*(iter-1)
                      columnAD = ipar
-                     !aderi(idp+nptsgr*(iter-1),ipar)=reszz/rhoinit
+                     aderi(idp+nptsgr*(iter-1),ipar)=reszz/rhoinit
                   endif
 
                else
@@ -239,7 +239,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         val_ad_s = resxx/rhoinit
                         rowAD = idp+nptsgr*(iter-1)
                         columnAD = ipar
-                        !aderi(idp+nptsgr*(iter-1),ipar)=res2xx*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2xx*1.d3
                   endif
                   if (rtvar(nbn+2) .ne. 0) then
                         iter=iter+1
@@ -248,7 +248,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         val_ad_s = resxx/rhoinit
                         rowAD = idp+nptsgr*(iter-1)
                         columnAD = ipar
-                        !aderi(idp+nptsgr*(iter-1),ipar)=res2xy*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2xy*1.d3
                   endif
                   if (rtvar(nbn+3) .ne. 0) then
                         iter=iter+1
@@ -257,7 +257,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         val_ad_s = resxx/rhoinit
                         rowAD = idp+nptsgr*(iter-1)
                         columnAD = ipar
-                        !aderi(idp+nptsgr*(iter-1),ipar)=res2xz*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2xz*1.d3
                   endif
                   if (rtvar(nbn+4) .ne. 0) then
                         iter=iter+1
@@ -266,7 +266,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         val_ad_s = resxx/rhoinit
                         rowAD = idp+nptsgr*(iter-1)
                         columnAD = ipar
-                        !aderi(idp+nptsgr*(iter-1),ipar)=res2yy*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2yy*1.d3
                   endif
                   if (rtvar(nbn+5) .ne. 0) then
                         iter=iter+1
@@ -275,7 +275,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         val_ad_s = resxx/rhoinit
                         rowAD = idp+nptsgr*(iter-1)
                         columnAD = ipar
-                        !aderi(idp+nptsgr*(iter-1),ipar)=res2yz*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2yz*1.d3
                   endif
                   if (rtvar(nbn+6) .ne. 0) then
                         iter=iter+1
@@ -284,7 +284,7 @@ subroutine CALGRADIO(iiter,aderi,caldata,par,FX,FY,FZ,nbod,xb,yb,zb,&
                         val_ad_s = resxx/rhoinit
                         rowAD = idp+nptsgr*(iter-1)
                         columnAD = ipar
-                        !aderi(idp+nptsgr*(iter-1),ipar)=res2zz*1.d3
+                        aderi(idp+nptsgr*(iter-1),ipar)=res2zz*1.d3
                   endif
 
                end if
